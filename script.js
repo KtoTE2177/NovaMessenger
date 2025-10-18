@@ -1,8 +1,11 @@
-/// Конфигурация сервера - относительные пути для Render
-const API_BASE = '';  // Пустая строка = текущий домен
+// Конфигурация сервера - ЗАМЕНИТЕ НА ВАШ РЕАЛЬНЫЙ IP АДРЕС
+const SERVER_IP = '192.168.0.118';
+const API_BASE = `http://${SERVER_IP}:8000`;
+const WS_URL = `ws://${SERVER_IP}:9001`;
 
 let currentUser = null;
-let isConnected = true; // Всегда true для HTTP
+let socket = null;
+let isConnected = false;
 let emojiPickerVisible = false;
 let messageCount = 0;
 let contextMenuVisible = false;
@@ -15,6 +18,7 @@ let isFavoritesView = false;
 let currentPrivateChatUser = null;
 let privateChats = {};
 let currentUserStatus = 'online';
+let bottomRightMenuVisible = false;
 
 // Функция для генерации дефолтного аватара (SVG)
 function generateDefaultAvatar(username) {
@@ -165,17 +169,19 @@ function updateLobbyUI() {
     }
 }
 
-// Инициализация при загрузке страницы
+// Вызовите эту функцию в init() или после успешного входа
 function init() {
-    checkAuthStatus();
+    checkAuth();
     loadTheme();
     setupEventListeners();
     setupSettingsScroll();
     if (currentUser) {
         displayAvatarPreview(currentUser.avatar);
+        startMessagePolling(); // ЗАПУСТИТЬ ОБНОВЛЕНИЕ
     }
     updateLobbyUI();
     console.log('Modern Messenger initialized');
+    console.log('Server URL:', API_BASE);
 }
 
 // Настройка обработчиков событий
@@ -261,6 +267,17 @@ function setupEventListeners() {
         });
     }
 
+    // УДАЛИТЬ ЭТИ СТРОКИ - они ссылаются на несуществующие элементы
+    // document.getElementById('menu-trigger-button').addEventListener('click', toggleBottomRightMenu);
+    
+    // document.addEventListener('click', function(event) {
+    //     const menu = document.getElementById('bottom-right-menu');
+    //     const trigger = document.getElementById('menu-trigger-button');
+    //     if (bottomRightMenuVisible && menu && trigger && !menu.contains(event.target) && !trigger.contains(event.target)) {
+    //         toggleBottomRightMenu();
+    //     }
+    // });
+    
     // Добавляем обработчик для кнопки смены статуса
     const statusToggleButton = document.getElementById('status-toggle-button');
     if (statusToggleButton) {
@@ -305,6 +322,9 @@ function setupKeyboardShortcuts() {
             if (editingMessageId) {
                 clearEditState();
             }
+            if (bottomRightMenuVisible) {
+                toggleBottomRightMenu();
+            }
         }
     });
 }
@@ -321,7 +341,7 @@ function checkAuth() {
         try {
             currentUser = JSON.parse(user);
             showApp();
-            startMessagePolling(); // Запускаем polling вместо WebSocket
+            connectWebSocket();
         } catch (error) {
             console.error('Error parsing user data:', error);
             logout();
@@ -353,21 +373,20 @@ function showApp() {
         displayAvatarPreview(currentUser.avatar);
     }
     
-    switchChat('general');
-    
+    // ЗАГРУЗИТЬ СООБЩЕНИЯ ПРИ ПОКАЗЕ ПРИЛОЖЕНИЯ
     setTimeout(() => {
-        const messagesContainer = document.getElementById('messages');
-        const messageInput = document.getElementById('message-input');
-        
-        if (messagesContainer) {
-            messagesContainer.style.display = 'block';
-        }
-        if (messageInput) {
-            messageInput.style.display = 'block';
-        }
-        
-        startMessagePolling(); // Запускаем polling
+        loadMessages();
+        switchChat('general');
     }, 100);
+}
+
+// Функция для периодического обновления сообщений
+function startMessagePolling() {
+    setInterval(() => {
+        if (currentUser && !currentPrivateChatUser && !isFavoritesView) {
+            loadMessages(false);
+        }
+    }, 3000); // Обновлять каждые 3 секунды
 }
 
 function showLogin() {
@@ -393,39 +412,44 @@ async function login() {
         showNotification('Заполните все поля', 'error');
         return;
     }
-
+	
     try {
         showLoading(true, 'login');
-        const response = await fetch('/login', {
+        const response = await fetch(`${API_BASE}/login`, {
             method: 'POST',
             headers: { 
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({ username, password })
         });
-
+	
         const data = await response.json();
         
-        if (data.success) {
-            localStorage.setItem('token', data.token);
-            let userData = data.user;
+			 if (data.success) {
+				localStorage.setItem('token', data.token);
+				let userData = data.user;
 
-            console.log("Login successful. Received user data:", userData);
-            
-            hideSettings();
-            hideProfileModal();
+				console.log("Login successful. Received user data:", userData);
+				
+				hideSettings();
+				hideProfileModal();
 
-            if (!userData.avatar) {
-                userData.avatar = generateDefaultAvatar(userData.username);
-            }
-            localStorage.setItem('user', JSON.stringify(userData));
-            currentUser = userData;
-            showNotification('Вход выполнен успешно! 🎉');
-            showApp();
-            startMessagePolling(); // Запускаем polling после логина
-        } else {
-            showNotification('Ошибка: ' + data.message, 'error');
-        }
+				if (!userData.avatar) {
+					userData.avatar = generateDefaultAvatar(userData.username);
+				}
+				localStorage.setItem('user', JSON.stringify(userData));
+				currentUser = userData;
+				showNotification('Вход выполнен успешно! 🎉');
+				showApp();
+				
+				// ЗАГРУЗИТЬ СООБЩЕНИЯ ПОСЛЕ ВХОДА
+				setTimeout(() => {
+					loadMessages();
+				}, 500);
+				
+			} else {
+				showNotification('Ошибка: ' + data.message, 'error');
+		}
     } catch (error) {
         console.error('Login error:', error);
         showNotification('Ошибка соединения с сервером', 'error');
@@ -457,7 +481,7 @@ async function register() {
     try {
         showLoading(true, 'register');
         const defaultAvatar = generateDefaultAvatar(username);
-        const response = await fetch('/register', {
+        const response = await fetch(`${API_BASE}/register`, {
             method: 'POST',
             headers: { 
                 'Content-Type': 'application/json',
@@ -512,35 +536,99 @@ function logout() {
     localStorage.removeItem('user');
     currentUser = null;
     
+    if (socket) {
+        socket.close();
+        socket = null;
+    }
+    
     isConnected = false;
     messageCount = 0;
     showNotification('Вы вышли из системы');
     showAuth();
     currentUserStatus = 'offline';
     updateLobbyUI();
-}
+    }
 
-// Polling для обновления сообщений
-let messagePollingInterval = null;
 
-function startMessagePolling() {
-    // Останавливаем предыдущий интервал если есть
-    if (messagePollingInterval) {
-        clearInterval(messagePollingInterval);
+// WebSocket соединение
+function connectWebSocket() {
+    const token = localStorage.getItem('token');
+    if (!token) {
+        console.error('No token for WebSocket connection');
+        showNotification('Ошибка авторизации', 'error');
+        return;
     }
     
-    // Загружаем сообщения каждые 5 секунд
-    messagePollingInterval = setInterval(() => {
-        if (currentUser) {
-            loadMessages(isFavoritesView);
-        }
-    }, 5000);
-}
-
-function stopMessagePolling() {
-    if (messagePollingInterval) {
-        clearInterval(messagePollingInterval);
-        messagePollingInterval = null;
+    try {
+        console.log('connectWebSocket: Attempting to connect to:', `${WS_URL}/?token=${encodeURIComponent(token)}`);
+        socket = new WebSocket(`${WS_URL}/?token=${encodeURIComponent(token)}`);
+        
+        socket.onopen = function() {
+            console.log('WebSocket connected successfully');
+            isConnected = true;
+            showNotification('Соединение установлено ✅');
+            currentUserStatus = 'online';
+            updateLobbyUI();
+            loadMessages();
+        };
+        
+        socket.onmessage = function(event) {
+            try {
+                const data = JSON.parse(event.data);
+                
+                if (data.type === 'message') {
+                    console.log('WebSocket: Received message data', data);
+                    addMessageToChat(data);
+                } else if (data.type === 'private_message') {
+                    console.log('WebSocket: Received private message data', data);
+                    const senderOrReceiver = data.username === currentUser.username ? data.receiver : data.username;
+                    if (!privateChats[senderOrReceiver]) {
+                        privateChats[senderOrReceiver] = [];
+                    }
+                    privateChats[senderOrReceiver].push(data);
+                    
+                    if (currentPrivateChatUser === senderOrReceiver) {
+                        addMessageToChat(data, true, true);
+                    } else {
+                        showNotification(`Новое личное сообщение от ${data.username}`, 'info');
+                        highlightPrivateChatTab(senderOrReceiver);
+                    }
+                } else if (data.type === 'status') {
+                    console.log('Status:', data.status);
+                } else if (data.type === 'user_joined') {
+                    showNotification(`${data.username} присоединился к чату`);
+                } else if (data.type === 'user_left') {
+                    showNotification(`${data.username} покинул чат`);
+                } else if (data.type === 'favorite_update') {
+                    updateMessageFavoriteStatusInDOM(data.messageId, data.isFavorite);
+                } else if (data.type === 'message_edited') {
+                    console.log('WebSocket: Received message edited data', data);
+                    updateMessageInDOM(data.messageId, data.newText, data.editedTimestamp);
+                }
+            } catch (error) {
+                console.error('Error parsing message:', error);
+            }
+        };
+        
+        socket.onclose = function(event) {
+            console.log('WebSocket disconnected:', event.code, event.reason);
+            isConnected = false;
+            
+            if (event.code !== 1000) {
+                showNotification('Соединение прервано. Переподключение...', 'error');
+                setTimeout(connectWebSocket, 3000);
+            }
+        };
+        
+        socket.onerror = function(error) {
+            console.error('WebSocket error:', error);
+            console.error('WebSocket URL:', `${WS_URL}/?token=${encodeURIComponent(token)}`);
+            showNotification('Ошибка соединения с чатом. Проверьте, что сервер запущен на порту 9001', 'error');
+        };
+    } catch (error) {
+        console.error('WebSocket connection error:', error);
+        showNotification('Не удалось установить соединение с чатом', 'error');
+        setTimeout(connectWebSocket, 3000);
     }
 }
 
@@ -564,51 +652,77 @@ async function sendMessage() {
         return;
     }
 
-    const currentReplyToId = replyToMessageId;
+    const currentReplyToMessageId = replyToMessageId;
+    const currentReplyToUsername = replyToUsername;
+    const currentReplyToText = replyToText;
 
     if (input) input.value = '';
     
+    if (!socket || socket.readyState !== WebSocket.OPEN) {
+        showNotification('Нет соединения с сервером', 'error');
+        return;
+    }
+    
     try {
-        const token = localStorage.getItem('token');
-        if (!token) {
-            showNotification('Вы не авторизованы', 'error');
-            return;
-        }
-
-        let url = '/message/send';
-        let body = {
-            text: text,
-            replyToId: currentReplyToId
-        };
-
-        if (currentPrivateChatUser) {
-            url = '/private-message';
-            body.receiver = currentPrivateChatUser;
-        }
-
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify(body)
-        });
-
-        const data = await response.json();
+        let message;
+        const tempMessageId = `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
         
-        if (data.success) {
-            showNotification('Сообщение отправлено ✅');
-            // Перезагружаем сообщения чтобы увидеть новое
-            setTimeout(() => {
-                if (currentPrivateChatUser) {
-                    loadPrivateChatMessages(currentPrivateChatUser);
-                } else {
-                    loadMessages(isFavoritesView);
+        if (currentPrivateChatUser) {
+            message = {
+                type: 'private_message',
+                id: tempMessageId,
+                text: text,
+                username: currentUser.username,
+                receiver: currentPrivateChatUser,
+                timestamp: new Date().toISOString(),
+                replyToId: currentReplyToMessageId,
+                avatar: currentUser.avatar
+            };
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${API_BASE}/private-message`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(message)
+            });
+            const data = await response.json();
+            if (data.success && data.message) {
+                const serverMessageId = data.message.id;
+                const serverTimestamp = data.message.timestamp;
+
+                const tempMessageElement = document.querySelector(`[data-message-id="${tempMessageId}"]`);
+                if (tempMessageElement) {
+                    tempMessageElement.dataset.messageId = serverMessageId;
+                    const smallElement = tempMessageElement.querySelector('small');
+                    if (smallElement) {
+                        smallElement.textContent = new Date(serverTimestamp).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+                    }
                 }
-            }, 500);
+
+                const cachedMessages = privateChats[currentPrivateChatUser];
+                const index = cachedMessages.findIndex(msg => msg.id === tempMessageId);
+                if (index !== -1) {
+                    cachedMessages[index].id = serverMessageId;
+                    cachedMessages[index].timestamp = serverTimestamp;
+                }
+                showNotification('Личное сообщение отправлено ✅');
+            } else {
+                showNotification('Ошибка отправки личного сообщения: ' + data.message, 'error');
+            }
         } else {
-            showNotification('Ошибка: ' + data.message, 'error');
+            message = {
+                type: 'message',
+                id: tempMessageId,
+                text: text,
+                username: currentUser.username,
+                timestamp: new Date().toISOString(),
+                replyToId: currentReplyToMessageId,
+                avatar: currentUser.avatar
+            };
+            socket.send(JSON.stringify(message));
+            showNotification('Сообщение отправлено ✅');
         }
         
         clearReplyState();
@@ -629,7 +743,7 @@ async function sendEditMessage(messageId, newText) {
     }
 
     try {
-        const response = await fetch('/message/edit', {
+        const response = await fetch(`${API_BASE}/message/edit`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -642,15 +756,15 @@ async function sendEditMessage(messageId, newText) {
         console.log(`sendEditMessage: Server response for edit message ID ${messageId}:`, data);
         if (data.success) {
             showNotification('Сообщение изменено ✅');
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify({
+                    type: 'message_edited',
+                    messageId: messageId,
+                    newText: newText,
+                    editedTimestamp: data.editedTimestamp
+                }));
+            }
             updateMessageInDOM(messageId, newText, data.editedTimestamp);
-            // Перезагружаем сообщения чтобы обновить список
-            setTimeout(() => {
-                if (currentPrivateChatUser) {
-                    loadPrivateChatMessages(currentPrivateChatUser);
-                } else {
-                    loadMessages(isFavoritesView);
-                }
-            }, 500);
         } else {
             showNotification('Ошибка: ' + data.message, 'error');
         }
@@ -665,19 +779,13 @@ function updateMessageInDOM(messageId, newText, editedTimestamp) {
     console.log(`updateMessageInDOM: Updating message ID ${messageId} with new text: ${newText} and timestamp: ${editedTimestamp}`);
     const messageElement = document.querySelector(`[data-message-id="${messageId}"]`);
     if (messageElement) {
-        const messageTextElement = messageElement.querySelector('.main-message-text');
-        if (messageTextElement) {
-            messageTextElement.textContent = newText;
-        }
+        messageElement.querySelector('.main-message-text').textContent = newText;
         if (editedTimestamp) {
-            const timeElement = messageElement.querySelector('small');
-            if (timeElement) {
-                const time = new Date(editedTimestamp).toLocaleTimeString('ru-RU', {
-                    hour: '2-digit',
-                    minute: '2-digit'
-                });
-                timeElement.textContent = `${time} (изм.)`;
-            }
+            const time = new Date(editedTimestamp).toLocaleTimeString('ru-RU', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            messageElement.querySelector('small').textContent = `${time} (изм.)`;
         }
     } else {
         console.warn(`updateMessageInDOM: Message element with ID ${messageId} not found in DOM.`);
@@ -692,15 +800,26 @@ function handleKeyPress(event) {
     }
 }
 
-// Загрузка сообщений
 async function loadMessages(onlyFavorites = false) {
-    console.log('loadMessages: Function called.', { onlyFavorites, currentPrivateChatUser });
+    console.log('=== loadMessages START ===');
+    console.log('onlyFavorites:', onlyFavorites);
+    console.log('currentUser:', currentUser);
+    console.log('currentPrivateChatUser:', currentPrivateChatUser);
+    
     try {
         const messagesContainer = document.getElementById('messages');
-        if (!messagesContainer) return;
+        console.log('messagesContainer:', messagesContainer);
+        
+        if (!messagesContainer) {
+            console.error('messagesContainer not found!');
+            return;
+        }
 
         const token = localStorage.getItem('token');
+        console.log('token exists:', !!token);
+        
         if (!token) {
+            console.error('No token found!');
             logout();
             return;
         }
@@ -709,12 +828,13 @@ async function loadMessages(onlyFavorites = false) {
         let chatTypeForDisplay = 'general';
 
         if (currentPrivateChatUser) {
+            console.log('Loading private messages for:', currentPrivateChatUser);
             chatTypeForDisplay = 'private';
             if (privateChats[currentPrivateChatUser]) {
                 messages = privateChats[currentPrivateChatUser];
                 console.log(`loadMessages: Loaded private messages for ${currentPrivateChatUser} from cache:`, messages);
             } else {
-                const url = `/private-messages?username=${encodeURIComponent(currentPrivateChatUser)}`;
+                const url = `${API_BASE}/private-messages?username=${encodeURIComponent(currentPrivateChatUser)}`;
                 const response = await fetch(url, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
@@ -727,7 +847,8 @@ async function loadMessages(onlyFavorites = false) {
             }
         } else if (onlyFavorites) {
             chatTypeForDisplay = 'favorites';
-            const url = '/messages/favorites';
+            console.log('Loading favorite messages');
+            const url = `${API_BASE}/messages/favorites`;
             const response = await fetch(url, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
@@ -740,27 +861,43 @@ async function loadMessages(onlyFavorites = false) {
             }
             messages = await response.json();
             console.log('loadMessages: Received favorite messages from server:', messages);
-        } else {
+         } else {
             chatTypeForDisplay = 'general';
-            const url = '/messages';
+            const url = `${API_BASE}/messages`;
+            console.log('Loading general messages from URL:', url);
+            
             const response = await fetch(url, {
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: { 
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
             });
+            
+            console.log('Response status:', response.status);
+            console.log('Response ok:', response.ok);
+            
             if (response.status === 401) {
+                console.error('Unauthorized - logging out');
                 logout();
                 return;
             }
+            
             if (!response.ok) {
-                throw new Error('HTTP error ' + response.status);
+                const errorText = await response.text();
+                console.error('HTTP error:', response.status, errorText);
+                throw new Error(`HTTP error ${response.status}: ${errorText}`);
             }
+            
             messages = await response.json();
-            console.log('loadMessages: Received general messages from server:', messages);
+            console.log('Received messages:', messages);
+            console.log('Number of messages:', messages.length);
         }
 
         messagesContainer.innerHTML = '';
         messageCount = messages.length;
 
         if (messages.length === 0) {
+            console.log('No messages, showing welcome message');
             messagesContainer.innerHTML = `
                 <div class="welcome-message">
                     <div class="welcome-icon">👋</div>
@@ -769,17 +906,20 @@ async function loadMessages(onlyFavorites = false) {
                 </div>
             `;
         } else {
-            messages.forEach(message => {
+            console.log('Adding messages to chat...');
+            messages.forEach((message, index) => {
+                console.log(`Message ${index}:`, message);
                 addMessageToChat(message, false, currentPrivateChatUser ? true : false);
             });
             scrollToBottom();
         }
+        
+        console.log('=== loadMessages END ===');
     } catch (error) {
         console.error('Ошибка загрузки сообщений:', error);
-        // Не показываем уведомление при обычном polling, чтобы не спамить
+        showNotification('Ошибка загрузки сообщений: ' + error.message, 'error');
     }
 }
-
 // Обновленная функция добавления сообщения в чат
 function addMessageToChat(message, animate = true, isPrivateChat = false) {
     console.log('addMessageToChat:', message, 'isPrivate:', isPrivateChat);
@@ -806,18 +946,10 @@ function addMessageToChat(message, animate = true, isPrivateChat = false) {
         welcomeMessage.remove();
     }
 
-    // Проверяем, не существует ли уже такое сообщение
-    const existingMessage = document.querySelector(`[data-message-id="${message.id}"]`);
-    if (existingMessage) {
-        // Обновляем существующее сообщение
-        updateMessageInDOM(message.id, message.text, message.editedTimestamp);
-        return;
-    }
-
     const messageElement = document.createElement('div');
     const isOwnMessage = currentUser && message.username === currentUser.username;
 
-    messageElement.className = `message ${isOwnMessage ? 'own' : 'other'}`;
+    messageElement.className = `message ${isOwnMessage ? 'own' : 'other'} ${message.isTemp ? 'temp' : ''}`;
     messageElement.dataset.messageId = message.id;
     messageElement.dataset.username = message.username;
     messageElement.dataset.isFavorite = message.isFavorite || false;
@@ -857,7 +989,7 @@ function addMessageToChat(message, animate = true, isPrivateChat = false) {
                 </span>
             </strong>
             <p class="main-message-text">${message.text}</p>
-            <small>${time} ${message.editedTimestamp ? `(изм. ${new Date(message.editedTimestamp).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })})` : ''}</small>
+            <small>${time} ${message.editedTimestamp ? `(изм. ${new Date(message.editedTimestamp).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })})` : ''} ${message.isTemp ? '⏳' : ''}</small>
         </div>
     `;
 
@@ -951,6 +1083,10 @@ function toggleTheme() {
     
     changeTheme(newTheme);
     showNotification(`Тема изменена на ${newTheme === 'light' ? 'светлую' : 'тёмную'}`, 'success');
+    // УДАЛИТЬ эту строку - меню больше не существует
+    if (bottomRightMenuVisible) {
+        toggleBottomRightMenu();
+    }
 }
 
 function changeTheme(theme = null) {
@@ -977,6 +1113,9 @@ function changeTheme(theme = null) {
 function showSettings() {
     const modal = document.getElementById('settings-modal');
     if (modal) {
+        if (bottomRightMenuVisible) {
+            toggleBottomRightMenu();
+        }
         modal.classList.add('modal-active');
         document.body.style.overflow = 'hidden';
         showSettingsTab('messenger');
@@ -1118,6 +1257,19 @@ function handleClickOutsideEmojiPicker(event) {
     }
 }
 
+// Добавьте эту функцию для индикатора прокрутки
+function setupSettingsScroll() {
+    const scrollArea = document.querySelector('#settings-modal .modal-body-scroll-area');
+    if (scrollArea) {
+        scrollArea.addEventListener('scroll', function() {
+            if (this.scrollTop > 10) {
+                this.classList.add('scrolled');
+            } else {
+                this.classList.remove('scrolled');
+            }
+        });
+    }
+}
 // Функция для заполнения сетки эмодзи
 function populateEmojiGrid() {
     console.log('populateEmojiGrid called');
@@ -1174,21 +1326,91 @@ function insertEmoji(emoji) {
     }
 }
 
-// Функция для настройки прокрутки настроек
-function setupSettingsScroll() {
-    const scrollArea = document.querySelector('#settings-modal .modal-body-scroll-area');
-    if (scrollArea) {
-        scrollArea.addEventListener('scroll', function() {
-            if (this.scrollTop > 10) {
-                this.classList.add('scrolled');
-            } else {
-                this.classList.remove('scrolled');
-            }
-        });
+// Проверка соединения
+function checkConnection() {
+    if (!isConnected && currentUser) {
+        showNotification('Нет соединения. Переподключение...', 'error');
+        connectWebSocket();
     }
 }
 
-// Функция для смены статуса
+// Периодическая проверка соединения
+setInterval(checkConnection, 10000);
+
+
+// Функция для обновления UI лобби аккаунта
+function updateLobbyUI() {
+    console.log('updateLobbyUI: Function called.');
+    const lobbyUsernameElement = document.getElementById('lobby-username');
+    const lobbyAvatarPreview = document.getElementById('lobby-avatar-preview');
+    const lobbyDefaultAvatarPreview = document.getElementById('lobby-default-avatar-preview');
+    const lobbyStatusIndicator = document.getElementById('lobby-status-indicator');
+    const currentStatusText = document.getElementById('current-status-text');
+    const statusToggleButton = document.getElementById('status-toggle-button');
+
+    if (!lobbyUsernameElement || !lobbyAvatarPreview || !lobbyDefaultAvatarPreview || 
+        !lobbyStatusIndicator || !currentStatusText || !statusToggleButton) {
+        console.error('Lobby UI elements not found!');
+        return;
+    }
+
+    if (currentUser) {
+        lobbyUsernameElement.textContent = currentUser.username;
+
+        // Обновляем аватар
+        if (currentUser.avatar && currentUser.avatar.startsWith('data:image')) {
+            lobbyAvatarPreview.src = currentUser.avatar;
+            lobbyAvatarPreview.classList.remove('hidden');
+            lobbyDefaultAvatarPreview.classList.add('hidden');
+        } else {
+            lobbyAvatarPreview.classList.add('hidden');
+            lobbyDefaultAvatarPreview.classList.remove('hidden');
+            if (currentUser.username) {
+                lobbyDefaultAvatarPreview.textContent = currentUser.username.charAt(0).toUpperCase();
+                lobbyDefaultAvatarPreview.style.backgroundColor = getAvatarColor(currentUser.username);
+            }
+        }
+
+        // Обновляем статус
+        lobbyStatusIndicator.className = 'status-indicator';
+        lobbyStatusIndicator.classList.add(currentUserStatus);
+
+        switch (currentUserStatus) {
+            case 'online':
+                currentStatusText.textContent = 'В сети';
+                lobbyStatusIndicator.style.backgroundColor = 'var(--success)';
+                statusToggleButton.innerHTML = '<i class="fas fa-circle" style="color: var(--success)"></i> <span id="current-status-text">В сети</span>';
+                break;
+            case 'busy':
+                currentStatusText.textContent = 'Занят';
+                lobbyStatusIndicator.style.backgroundColor = 'var(--danger)';
+                statusToggleButton.innerHTML = '<i class="fas fa-circle" style="color: var(--danger)"></i> <span id="current-status-text">Занят</span>';
+                break;
+            case 'away':
+                currentStatusText.textContent = 'Нет на месте';
+                lobbyStatusIndicator.style.backgroundColor = 'var(--accent)';
+                statusToggleButton.innerHTML = '<i class="fas fa-circle" style="color: var(--accent)"></i> <span id="current-status-text">Нет на месте</span>';
+                break;
+            case 'offline':
+                currentStatusText.textContent = 'Не в сети';
+                lobbyStatusIndicator.style.backgroundColor = 'var(--text-secondary)';
+                statusToggleButton.innerHTML = '<i class="fas fa-circle" style="color: var(--text-secondary)"></i> <span id="current-status-text">Не в сети</span>';
+                break;
+        }
+    } else {
+        lobbyUsernameElement.textContent = 'Не в сети';
+        lobbyAvatarPreview.classList.add('hidden');
+        lobbyDefaultAvatarPreview.classList.remove('hidden');
+        lobbyDefaultAvatarPreview.textContent = '?';
+        lobbyDefaultAvatarPreview.style.backgroundColor = 'var(--text-secondary)';
+        lobbyStatusIndicator.className = 'status-indicator offline';
+        lobbyStatusIndicator.style.backgroundColor = 'var(--text-secondary)';
+        currentStatusText.textContent = 'Не в сети';
+        statusToggleButton.innerHTML = '<i class="fas fa-circle" style="color: var(--text-secondary)"></i> <span id="current-status-text">Не в сети</span>';
+    }
+}
+
+// Добавляем функцию для смены статуса
 function toggleUserStatus() {
     const statuses = ['online', 'busy', 'away', 'offline'];
     const currentIndex = statuses.indexOf(currentUserStatus);
@@ -1197,6 +1419,11 @@ function toggleUserStatus() {
     
     updateLobbyUI();
     showNotification(`Статус изменен на: ${getStatusText(currentUserStatus)}`);
+    
+    // Если меню открыто, обновляем его
+    if (bottomRightMenuVisible) {
+        updateLobbyUI();
+    }
 }
 
 function getStatusText(status) {
@@ -1215,7 +1442,8 @@ window.onload = function() {
     setupKeyboardShortcuts();
 };
 
-// Вспомогательные функции для модальных окон
+// НОВЫЕ ИСПРАВЛЕННЫЕ ФУНКЦИИ:
+
 function hideProfileModal() {
     const modal = document.getElementById('profile-modal');
     if (modal) {
@@ -1271,7 +1499,7 @@ async function searchUsers() {
     
     try {
         const token = localStorage.getItem('token');
-        const response = await fetch(`/users/search?q=${encodeURIComponent(query)}`, {
+        const response = await fetch(`${API_BASE}/users/search?q=${encodeURIComponent(query)}`, {
             headers: {
                 'Authorization': `Bearer ${token}`
             }
@@ -1289,7 +1517,6 @@ async function searchUsers() {
         showNotification('Ошибка поиска пользователей', 'error');
     }
 }
-
 // Отображение результатов поиска
 function displaySearchResults(users) {
     const searchResultsList = document.getElementById('search-results-list');
@@ -1326,7 +1553,6 @@ function displaySearchResults(users) {
     
     searchResultsList.style.display = 'block';
 }
-
 // Запуск приватного чата
 function startPrivateChat(username) {
     console.log('Starting private chat with:', username);
@@ -1377,7 +1603,6 @@ function startPrivateChat(username) {
     // Переключаемся на приватный чат
     switchToPrivateChat(username);
 }
-
 // Переключение на приватный чат
 function switchToPrivateChat(username) {
     console.log('Switching to private chat with:', username);
@@ -1408,7 +1633,6 @@ function switchToPrivateChat(username) {
         messageInputContainer.classList.remove('favorites-collapsed');
     }
 }
-
 // Загрузка сообщений приватного чата
 async function loadPrivateChatMessages(username) {
     console.log('Loading private chat messages for:', username);
@@ -1420,7 +1644,7 @@ async function loadPrivateChatMessages(username) {
     
     try {
         const token = localStorage.getItem('token');
-        const url = `/private-messages?username=${encodeURIComponent(username)}`;
+        const url = `${API_BASE}/private-messages?username=${encodeURIComponent(username)}`;
         const response = await fetch(url, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
@@ -1460,7 +1684,6 @@ async function loadPrivateChatMessages(username) {
         `;
     }
 }
-
 // Закрытие приватного чата
 function closePrivateChat(username) {
     console.log('Closing private chat:', username);
@@ -1479,6 +1702,7 @@ function closePrivateChat(username) {
     // Удаляем из кэша
     delete privateChats[username];
 }
+
 
 function highlightPrivateChatTab(username) {
     console.log('Highlight private chat tab for:', username);
@@ -1513,6 +1737,8 @@ function switchChat(chatType, username = null) {
         messageInputContainer.classList.remove('favorites-collapsed');
     }
 }
+
+
 
 // Функция для сохранения аватара
 async function saveAvatar() {
@@ -1577,7 +1803,7 @@ async function updateProfile(avatar, aboutMe) {
     try {
         showNotification('Сохранение...', 'info');
         
-        const response = await fetch('/user/profile/update', {
+        const response = await fetch(`${API_BASE}/user/profile/update`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -1675,38 +1901,19 @@ function scrollToMessageAndHighlight(messageId) {
         }, 2000);
     }
 }
-// Добавьте эту функцию в конец script.js
-function checkAuthStatus() {
-    const token = localStorage.getItem('token');
-    const user = localStorage.getItem('user');
+
+function addToFavorites() {
+    if (!currentMessageElement) return;
     
-    if (token && user) {
-        try {
-            currentUser = JSON.parse(user);
-            console.log('✅ User is logged in:', currentUser.username);
-            showApp();
-            return true;
-        } catch (e) {
-            console.error('Error parsing user data:', e);
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-        }
-    }
+    const messageId = currentMessageElement.dataset.messageId;
+    const isFavorite = currentMessageElement.dataset.isFavorite === 'true';
     
-    console.log('❌ User is not logged in');
-    showAuth();
-    return false;
-}
-function toggleFavorite(messageId) {
     if (!messageId) return;
     
     const token = localStorage.getItem('token');
     if (!token) return;
     
-    const messageElement = document.querySelector(`[data-message-id="${messageId}"]`);
-    const isFavorite = messageElement ? messageElement.dataset.isFavorite === 'true' : false;
-    
-    fetch('/message/favorite', {
+    fetch(`${API_BASE}/message/favorite`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -1720,12 +1927,10 @@ function toggleFavorite(messageId) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            if (messageElement) {
-                messageElement.dataset.isFavorite = !isFavorite;
-                const favoriteIcon = messageElement.querySelector('.message-favorite-icon');
-                if (favoriteIcon) {
-                    favoriteIcon.classList.toggle('active', !isFavorite);
-                }
+            currentMessageElement.dataset.isFavorite = !isFavorite;
+            const favoriteIcon = currentMessageElement.querySelector('.message-favorite-icon');
+            if (favoriteIcon) {
+                favoriteIcon.classList.toggle('active', !isFavorite);
             }
             showNotification(isFavorite ? 'Убрано из избранного' : 'Добавлено в избранное');
         } else {
@@ -1738,6 +1943,19 @@ function toggleFavorite(messageId) {
     });
 }
 
+// НОВАЯ ФУНКЦИЯ loadProfileData
+function loadProfileData() {
+    if (!currentUser) return;
+    
+    const aboutMeInput = document.getElementById('about-me-input');
+    if (aboutMeInput && currentUser.aboutMe) {
+        aboutMeInput.value = currentUser.aboutMe;
+    }
+    
+    displayAvatarPreview(currentUser.avatar);
+}
+
+// НОВАЯ ФУНКЦИЯ showContextMenu
 function showContextMenu(x, y, messageElement) {
     const contextMenu = document.getElementById('context-menu');
     if (!contextMenu) return;
@@ -1750,6 +1968,7 @@ function showContextMenu(x, y, messageElement) {
     currentMessageElement = messageElement;
 }
 
+// НОВАЯ ФУНКЦИЯ hideContextMenu
 function hideContextMenu() {
     const contextMenu = document.getElementById('context-menu');
     if (contextMenu) {
@@ -1758,6 +1977,7 @@ function hideContextMenu() {
     contextMenuVisible = false;
 }
 
+// НОВАЯ ФУНКЦИЯ updateMessageFavoriteStatusInDOM
 function updateMessageFavoriteStatusInDOM(messageId, isFavorite) {
     const messageElement = document.querySelector(`[data-message-id="${messageId}"]`);
     if (messageElement) {
@@ -1788,7 +2008,7 @@ window.hideSettings = hideSettings;
 window.toggleEmojiPicker = toggleEmojiPicker;
 window.hideEmojiPicker = hideEmojiPicker;
 window.insertEmoji = insertEmoji;
-window.toggleFavorite = toggleFavorite;
+window.addToFavorites = addToFavorites;
 window.editMessage = editMessage;       
 window.scrollToMessageAndHighlight = scrollToMessageAndHighlight; 
 window.clearEditState = clearEditState; 
@@ -1811,5 +2031,8 @@ window.displayAvatarPreview = displayAvatarPreview;
 window.handleAvatarChange = handleAvatarChange;
 window.updateLobbyUI = updateLobbyUI;
 window.toggleUserStatus = toggleUserStatus;
+window.updateLobbyUI = updateLobbyUI;
+
+
 
 
