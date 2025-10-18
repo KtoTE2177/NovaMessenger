@@ -1,5 +1,3 @@
-import asyncio
-import websockets
 import json
 import sqlite3
 from datetime import datetime
@@ -1055,9 +1053,7 @@ async def main():
     # Запускаем HTTP сервер в отдельном потоке
     http_thread = threading.Thread(target=run_http_server, daemon=True)
     http_thread.start()
-    
-    # Запускаем WebSocket сервер в основном потоке
-    await run_websocket_server()
+
 
 if __name__ == '__main__':
     print("Запуск мессенджера...")
@@ -1067,4 +1063,5 @@ if __name__ == '__main__':
         asyncio.run(main())
     except KeyboardInterrupt:
         print("Сервер остановлен") 
+
 
