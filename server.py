@@ -206,12 +206,15 @@ class HTTPHandler(BaseHTTPRequestHandler):
         self.end_headers()
     
     def do_GET(self):
+        print(f"do_GET: Path received: {self.path}")
         if self.path == '/':
             self.serve_file('index.html', 'text/html')
         elif self.path == '/style.css':
             self.serve_file('style.css', 'text/css')
         elif self.path == '/script.js':
             self.serve_file('script.js', 'application/javascript')
+        elif self.path == '/websocket_test.html':
+            self.serve_file('websocket_test.html', 'text/html')
         elif self.path == '/messages':
             self.handle_get_messages()
         elif self.path == '/messages/favorites':
@@ -709,3 +712,4 @@ if __name__ == '__main__':
     print("Запуск HTTP мессенджера...")
     print("=" * 50)
     run_http_server()
+
