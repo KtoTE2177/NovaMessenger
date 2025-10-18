@@ -1,0 +1,3559 @@
+html, body {
+    height: 100%; /* Устанавливаем 100% высоты для html и body */
+    margin: 0;
+    padding: 0;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif;
+    transition: all 0.3s ease;
+    -webkit-font-smoothing: antialiased; /* Для лучшего сглаживания шрифтов на Webkit-браузерах */
+    -moz-osx-font-smoothing: grayscale; /* Для лучшего сглаживания шрифтов на Firefox (macOS) */
+    text-rendering: optimizeLegibility; /* Оптимизация читаемости текста */
+}
+/* КРАСИВЫЕ КНОПКИ С ОБВОДКАМИ */
+.sidebar-menu .menu-btn,
+.sidebar-menu .logout-button,
+.sidebar-menu .status-button {
+    all: unset !important;
+    box-sizing: border-box !important;
+}
+
+.sidebar-menu .menu-buttons {
+    all: unset !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.8rem !important;
+    margin-top: 1rem !important;
+    width: 100% !important;
+}
+
+/* ИСПРАВЛЕНИЕ ПРОКРУТКИ В НАСТРОЙКАХ */
+#settings-modal .modal-content {
+    display: flex !important;
+    flex-direction: column !important;
+    height: 90vh !important;
+    max-height: 700px !important;
+}
+
+#settings-modal .modal-body-scroll-area {
+    flex: 1 !important;
+    overflow-y: auto !important;
+    padding: 2.5rem !important;
+    max-height: calc(100% - 200px) !important; /* Оставляем место для header и footer */
+}
+
+/* Улучшаем внешний вид скроллбара */
+#settings-modal .modal-body-scroll-area::-webkit-scrollbar {
+    width: 8px;
+}
+
+#settings-modal .modal-body-scroll-area::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+    border-radius: 4px;
+}
+
+#settings-modal .modal-body-scroll-area::-webkit-scrollbar-thumb {
+    background: var(--accent);
+    border-radius: 4px;
+}
+
+#settings-modal .modal-body-scroll-area::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-hover);
+}
+
+/* Убедимся, что все секции видны */
+#settings-modal .settings-section {
+    margin-bottom: 2rem !important;
+}
+/* Плавная прокрутка */
+#settings-modal .modal-body-scroll-area {
+    scroll-behavior: smooth;
+}
+
+/* Индикатор прокрутки */
+#settings-modal .modal-body-scroll-area::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 20px;
+    background: linear-gradient(transparent, var(--bg-primary));
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+#settings-modal .modal-body-scroll-area.scrolled::after {
+    opacity: 1;
+}
+
+/* Подсветка активной секции */
+#settings-modal .settings-section:target {
+    background: var(--bg-hover) !important;
+    border-color: var(--accent) !important;
+}
+/* Улучшаем отображение вкладок профиля */
+#profile-tab-content .settings-section {
+    background: var(--bg-secondary) !important;
+    border-radius: 16px !important;
+    padding: 2rem !important;
+    border: 1px solid var(--border) !important;
+}
+
+/* Адаптивность для мобильных устройств */
+@media (max-width: 768px) {
+    #settings-modal .modal-content {
+        height: 95vh !important;
+        width: 98vw !important;
+    }
+    
+    #settings-modal .modal-body-scroll-area {
+        padding: 1.5rem !important;
+    }
+}
+/* Стили для красивого поиска пользователей */
+.user-search-section {
+    position: relative;
+    margin-bottom: 1.5rem;
+    padding: 0 0.5rem;
+}
+
+#user-search-input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px var(--shadow);
+}
+
+#user-search-input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 4px 15px rgba(0, 123, 255, 0.2);
+    transform: translateY(-1px);
+}
+
+#user-search-input::placeholder {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.search-results-list {
+    position: absolute;
+    top: 100%;
+    left: 0.5rem;
+    right: 0.5rem;
+    background: var(--bg-primary);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    box-shadow: 0 8px 25px var(--shadow);
+    max-height: 300px;
+    overflow-y: auto;
+    z-index: 1000;
+    margin-top: 5px;
+    display: none;
+}
+
+.search-result-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border);
+    transition: all 0.3s ease;
+    gap: 12px;
+}
+
+.search-result-item:last-child {
+    border-bottom: none;
+}
+
+.search-result-item:hover {
+    background: var(--bg-secondary);
+    transform: translateX(5px);
+}
+
+.search-result-item.no-results {
+    color: var(--text-secondary);
+    font-style: italic;
+    text-align: center;
+    cursor: default;
+}
+
+.search-result-item.no-results:hover {
+    background: transparent;
+    transform: none;
+}
+
+.user-avatar-small {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: white;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+    border: 2px solid var(--border);
+    overflow: hidden;
+}
+
+.user-avatar-small img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.user-search-name {
+    color: var(--text-primary);
+    font-weight: 600;
+    font-size: 1rem;
+    flex-grow: 1;
+}
+
+.user-about-preview {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 150px;
+}
+
+/* Стили для вкладок приватных чатов */
+.private-chat-item {
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-right: 40px !important;
+}
+
+.close-private-chat {
+    position: absolute;
+    right: 10px;
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+    opacity: 0;
+}
+
+.private-chat-item:hover .close-private-chat {
+    opacity: 1;
+}
+
+.close-private-chat:hover {
+    color: var(--danger);
+    background: var(--bg-hover);
+}
+
+/* Анимации для поиска */
+@keyframes searchSlideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.search-results-list {
+    animation: searchSlideDown 0.3s ease-out;
+}
+
+/* Кастомный скроллбар для результатов поиска */
+.search-results-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.search-results-list::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+    border-radius: 3px;
+}
+
+.search-results-list::-webkit-scrollbar-thumb {
+    background: var(--accent);
+    border-radius: 3px;
+}
+
+.search-results-list::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-hover);
+}
+
+/* Адаптивность для мобильных устройств */
+@media (max-width: 768px) {
+    .user-search-section {
+        padding: 0;
+    }
+    
+    #user-search-input {
+        padding: 10px 14px;
+        font-size: 0.9rem;
+    }
+    
+    .search-results-list {
+        left: 0;
+        right: 0;
+    }
+    
+    .search-result-item {
+        padding: 10px 14px;
+    }
+    
+    .user-avatar-small {
+        width: 35px;
+        height: 35px;
+        font-size: 1rem;
+    }
+    
+    .user-about-preview {
+        max-width: 120px;
+    }
+}
+
+/* Индикатор загрузки для поиска */
+.search-loading {
+    position: relative;
+}
+
+.search-loading::after {
+    content: '';
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 16px;
+    height: 16px;
+    border: 2px solid transparent;
+    border-top: 2px solid var(--accent);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: translateY(-50%) rotate(0deg); }
+    100% { transform: translateY(-50%) rotate(360deg); }
+}
+
+/* Подсветка нового приватного чата */
+.private-chat-item.new-message {
+    animation: pulse-new-message 2s ease-in-out;
+}
+
+@keyframes pulse-new-message {
+    0%, 100% { background: transparent; }
+    50% { background: rgba(var(--accent-rgb), 0.1); }
+}
+
+/* Стили для пустого состояния */
+.empty-search-state {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-secondary);
+}
+
+.empty-search-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+.search-input-container {
+    position: relative;
+}
+
+.search-input-container .search-icon {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-secondary);
+    transition: all 0.3s ease;
+}
+
+.search-input-container.focused .search-icon {
+    color: var(--accent);
+    transform: translateY(-50%) scale(1.1);
+}
+/* Основные стили для кнопок меню */
+.sidebar-menu .menu-btn {
+    background: var(--bg-tertiary) !important;
+    color: var(--text-primary) !important;
+    border: 2px solid var(--accent) !important;
+    padding: 14px 18px !important;
+    border-radius: 12px !important;
+    cursor: pointer !important;
+    font-size: 1rem !important;
+    font-weight: 600 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 0.8rem !important;
+    width: 100% !important;
+    text-align: left !important;
+    transition: all 0.3s ease !important;
+    box-shadow: 0 4px 12px var(--shadow) !important;
+    position: relative !important;
+    overflow: hidden !important;
+}
+
+/* Эффект градиентной обводки при наведении */
+.sidebar-menu .menu-btn::before {
+    content: '' !important;
+    position: absolute !important;
+    top: -2px !important;
+    left: -2px !important;
+    right: -2px !important;
+    bottom: -2px !important;
+    background: linear-gradient(45deg, var(--accent), #ff6b6b, #4ecdc4, var(--accent)) !important;
+    border-radius: 14px !important;
+    z-index: -1 !important;
+    opacity: 0 !important;
+    transition: opacity 0.3s ease !important;
+}
+
+.sidebar-menu .menu-btn:hover::before {
+    opacity: 1 !important;
+}
+
+/* Эффект при наведении */
+.sidebar-menu .menu-btn:hover {
+    background: var(--accent) !important;
+    color: white !important;
+    transform: translateY(-3px) !important;
+    box-shadow: 0 8px 25px var(--shadow) !important;
+    border-color: transparent !important;
+}
+
+.sidebar-menu .menu-btn:hover i {
+    color: white !important;
+    transform: scale(1.2) rotate(5deg) !important;
+}
+
+/* Иконки кнопок */
+.sidebar-menu .menu-btn i {
+    font-size: 1.2rem !important;
+    width: 24px !important;
+    text-align: center !important;
+    transition: all 0.3s ease !important;
+}
+
+/* Индивидуальные цвета обводок для кнопок */
+.sidebar-menu .menu-btn:nth-child(1) {
+    border-color: #ffd43b !important; /* Золотая обводка для темы */
+}
+
+.sidebar-menu .menu-btn:nth-child(1)::before {
+    background: linear-gradient(45deg, #ffd43b, #ff8787, #74c0fc, #ffd43b) !important;
+}
+
+.sidebar-menu .menu-btn:nth-child(1) i {
+    color: #ffd43b !important;
+}
+
+.sidebar-menu .menu-btn:nth-child(2) {
+    border-color: #74c0fc !important; /* Голубая обводка для настроек */
+}
+
+.sidebar-menu .menu-btn:nth-child(2)::before {
+    background: linear-gradient(45deg, #74c0fc, #b197fc, #63e6be, #74c0fc) !important;
+}
+
+.sidebar-menu .menu-btn:nth-child(2) i {
+    color: #74c0fc !important;
+}
+
+/* Кнопка выхода с красной обводкой */
+.sidebar-menu .logout-button {
+    background: var(--bg-tertiary) !important;
+    color: var(--danger) !important;
+    border: 2px solid var(--danger) !important;
+    margin-top: 0.5rem !important;
+    padding: 14px 18px !important;
+    border-radius: 12px !important;
+    cursor: pointer !important;
+    font-size: 1rem !important;
+    font-weight: 600 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 0.8rem !important;
+    width: 100% !important;
+    text-align: left !important;
+    transition: all 0.3s ease !important;
+    box-shadow: 0 4px 12px var(--shadow) !important;
+    position: relative !important;
+    overflow: hidden !important;
+}
+
+.sidebar-menu .logout-button::before {
+    content: '' !important;
+    position: absolute !important;
+    top: -2px !important;
+    left: -2px !important;
+    right: -2px !important;
+    bottom: -2px !important;
+    background: linear-gradient(45deg, var(--danger), #ff8787, #ffa94d, var(--danger)) !important;
+    border-radius: 14px !important;
+    z-index: -1 !important;
+    opacity: 0 !important;
+    transition: opacity 0.3s ease !important;
+}
+
+.sidebar-menu .logout-button:hover::before {
+    opacity: 1 !important;
+}
+
+.sidebar-menu .logout-button:hover {
+    background: var(--danger) !important;
+    color: white !important;
+    transform: translateY(-3px) !important;
+    box-shadow: 0 8px 25px rgba(220, 53, 69, 0.4) !important;
+    border-color: transparent !important;
+}
+
+.sidebar-menu .logout-button:hover i {
+    color: white !important;
+    transform: scale(1.2) !important;
+}
+
+.sidebar-menu .logout-button i {
+    color: var(--danger) !important;
+    transition: all 0.3s ease !important;
+}
+
+/* Кнопка статуса с зеленой обводкой */
+.sidebar-menu .status-button {
+    background: var(--bg-secondary) !important;
+    color: var(--text-primary) !important;
+    border: 2px solid var(--success) !important;
+    padding: 12px 16px !important;
+    border-radius: 10px !important;
+    cursor: pointer !important;
+    font-size: 0.95rem !important;
+    font-weight: 600 !important;
+    display: flex !important;
+    justify-content: flex-start !important;
+    align-items: center !important;
+    gap: 0.8rem !important;
+    width: 100% !important;
+    margin-bottom: 1rem !important;
+    transition: all 0.3s ease !important;
+    box-shadow: 0 4px 12px var(--shadow) !important;
+    position: relative !important;
+    overflow: hidden !important;
+}
+
+.sidebar-menu .status-button::before {
+    content: '' !important;
+    position: absolute !important;
+    top: -2px !important;
+    left: -2px !important;
+    right: -2px !important;
+    bottom: -2px !important;
+    background: linear-gradient(45deg, var(--success), #69db7c, #ffa94d, var(--success)) !important;
+    border-radius: 12px !important;
+    z-index: -1 !important;
+    opacity: 0 !important;
+    transition: opacity 0.3s ease !important;
+}
+
+.sidebar-menu .status-button:hover::before {
+    opacity: 1 !important;
+}
+
+.sidebar-menu .status-button:hover {
+    background: var(--success) !important;
+    color: white !important;
+    transform: translateY(-3px) !important;
+    box-shadow: 0 8px 25px rgba(40, 167, 69, 0.4) !important;
+    border-color: transparent !important;
+}
+
+.sidebar-menu .status-button:hover i {
+    color: white !important;
+    transform: scale(1.2) !important;
+}
+
+.sidebar-menu .status-button i {
+    color: var(--success) !important;
+    transition: all 0.3s ease !important;
+}
+
+/* Анимация появления кнопок */
+.sidebar-menu .menu-btn,
+.sidebar-menu .logout-button,
+.sidebar-menu .status-button {
+    animation: buttonSlideIn 0.5s ease-out !important;
+}
+
+.sidebar-menu .status-button { animation-delay: 0s !important; }
+.sidebar-menu .menu-btn:nth-child(1) { animation-delay: 0.1s !important; }
+.sidebar-menu .menu-btn:nth-child(2) { animation-delay: 0.2s !important; }
+.sidebar-menu .logout-button { animation-delay: 0.3s !important; }
+
+@keyframes buttonSlideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Эффект пульсации для активного статуса */
+.sidebar-menu .status-button.online i {
+    animation: pulse 2s infinite !important;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+/* Дополнительные стили для темной темы */
+.dark-theme .sidebar-menu .menu-btn {
+    background: rgba(255, 255, 255, 0.05) !important;
+    backdrop-filter: blur(10px) !important;
+}
+
+.dark-theme .sidebar-menu .logout-button {
+    background: rgba(255, 255, 255, 0.05) !important;
+    backdrop-filter: blur(10px) !important;
+}
+
+.dark-theme .sidebar-menu .status-button {
+    background: rgba(255, 255, 255, 0.05) !important;
+    backdrop-filter: blur(10px) !important;
+}
+/* Темы */
+.light-theme {
+    --bg-primary: #ffffff;
+    --bg-secondary: #f0f2f5; /* Немного более теплый и мягкий серый */
+    --text-primary: #212529;
+    --text-secondary: #6c757d;
+    --accent: #007bff; /* Сохраняем синий акцент */
+    --accent-hover: #0056b3;
+    --border: #e0e0e0; /* Более мягкая граница */
+    --message-bg: #e9ecef; /* Фон сообщений других пользователей */
+    --message-own-bg: #d4edda; /* Немного более зеленый для собственных сообщений */
+    --success: #28a745;
+    --danger: #dc3545;
+    --shadow: rgba(0, 0, 0, 0.08); /* Мягкая тень */
+    --input-bg: #ffffff;
+    --button-text: #ffffff;
+}
+
+.dark-theme {
+    --bg-primary: #121212; /* Очень темный фон */
+    --bg-secondary: #1e1e1e; /* Темнее для вторичных элементов */
+    --text-primary: #e0e0e0;
+    --text-secondary: #a0a0a0;
+    --accent: #82aaff; /* Более мягкий голубой акцент */
+    --accent-hover: #6a95e2;
+    --border: #333333; /* Более темная граница */
+    --message-bg: #282828; /* Фон сообщений других пользователей */
+    --message-own-bg: #343a40; /* Фон собственных сообщений */
+    --success: #69f0ae;
+    --danger: #ff5252;
+    --shadow: rgba(0, 0, 0, 0.4); /* Более выраженная тень */
+    --input-bg: #242424; /* Фон для полей ввода */
+    --button-text: #ffffff;
+}
+
+/* Стили для темной темы */
+body.dark-theme {
+    --bg-primary: #121212;
+    --bg-secondary: #1e1e1e;
+    --bg-tertiary: #2a2a2a;
+    --bg-input: #242424;
+    --bg-hover: #333333;
+    --bg-active: #404040;
+    --border: #333333;
+    --text-primary: #e0e0e0;
+    --text-secondary: #a0a0a0;
+    --text-placeholder: #777;
+    --text-muted: #a0a0a0;
+    --link-color: #82aaff;
+    --error-color: #ff5252;
+}
+/* КРАСИВЫЕ НАСТРОЙКИ - ОБНОВЛЕННЫЙ ДИЗАЙН */
+#settings-modal .modal-content {
+    width: 95vw !important;
+    max-width: 900px !important;
+    height: 90vh !important;
+    max-height: 700px !important;
+    background: var(--bg-primary) !important;
+    border-radius: 20px !important;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3) !important;
+    border: 1px solid var(--border) !important;
+    overflow: hidden !important;
+    position: relative !important;
+}
+
+/* Градиентный фон для модального окна */
+#settings-modal .modal-content::before {
+    content: '' !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    height: 4px !important;
+    background: linear-gradient(90deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4, #ffeaa7) !important;
+    z-index: 10 !important;
+}
+
+/* Заголовок настроек */
+#settings-modal .modal-header {
+    background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary)) !important;
+    padding: 2rem 2.5rem 1.5rem !important;
+    border-bottom: 1px solid var(--border) !important;
+    position: relative !important;
+}
+
+#settings-modal .modal-header h3 {
+    color: var(--text-primary) !important;
+    font-weight: 700 !important;
+    font-size: 1.8rem !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 1rem !important;
+}
+
+#settings-modal .modal-header h3 i {
+    color: var(--accent) !important;
+    font-size: 1.6rem !important;
+}
+
+/* Навигация по вкладкам - современный дизайн */
+#settings-modal .tab-navigation {
+    background: var(--bg-secondary) !important;
+    padding: 0 2.5rem !important;
+    border-bottom: 1px solid var(--border) !important;
+    display: flex !important;
+    gap: 0.5rem !important;
+}
+
+#settings-modal .tab-button {
+    background: transparent !important;
+    border: none !important;
+    padding: 1.2rem 2rem !important;
+    font-size: 1.05rem !important;
+    font-weight: 600 !important;
+    color: var(--text-secondary) !important;
+    cursor: pointer !important;
+    transition: all 0.3s ease !important;
+    position: relative !important;
+    border-radius: 12px 12px 0 0 !important;
+}
+
+#settings-modal .tab-button::after {
+    content: '' !important;
+    position: absolute !important;
+    bottom: 0 !important;
+    left: 50% !important;
+    width: 0 !important;
+    height: 3px !important;
+    background: var(--accent) !important;
+    transition: all 0.3s ease !important;
+    transform: translateX(-50%) !important;
+    border-radius: 3px !important;
+}
+
+#settings-modal .tab-button:hover {
+    color: var(--text-primary) !important;
+    background: var(--bg-hover) !important;
+}
+
+#settings-modal .tab-button.active {
+    color: var(--accent) !important;
+    background: var(--bg-primary) !important;
+}
+
+#settings-modal .tab-button.active::after {
+    width: 80% !important;
+}
+
+/* Контент вкладок */
+#settings-modal .modal-body-scroll-area {
+    padding: 2.5rem !important;
+    background: var(--bg-primary) !important;
+}
+
+/* Секции настроек */
+#settings-modal .settings-section {
+    background: var(--bg-secondary) !important;
+    border-radius: 16px !important;
+    padding: 2rem !important;
+    margin-bottom: 2rem !important;
+    border: 1px solid var(--border) !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05) !important;
+    transition: transform 0.3s ease, box-shadow 0.3s ease !important;
+}
+
+#settings-modal .settings-section:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1) !important;
+}
+
+#settings-modal .settings-section h4 {
+    color: var(--text-primary) !important;
+    font-weight: 700 !important;
+    font-size: 1.3rem !important;
+    margin-bottom: 1.5rem !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.8rem !important;
+    padding-bottom: 0.8rem !important;
+    border-bottom: 2px solid var(--accent) !important;
+}
+
+#settings-modal .settings-section h4::before {
+    content: '' !important;
+    width: 4px !important;
+    height: 20px !important;
+    background: var(--accent) !important;
+    border-radius: 2px !important;
+}
+
+/* Элементы настроек */
+#settings-modal .settings-option {
+    display: flex !important;
+    align-items: center !important;
+    gap: 1.5rem !important;
+    margin-bottom: 1.5rem !important;
+    padding: 1rem !important;
+    background: var(--bg-primary) !important;
+    border-radius: 12px !important;
+    border: 1px solid var(--border) !important;
+    transition: all 0.3s ease !important;
+}
+
+#settings-modal .settings-option:hover {
+    border-color: var(--accent) !important;
+    box-shadow: 0 2px 12px rgba(0, 123, 255, 0.1) !important;
+}
+
+#settings-modal .settings-option label {
+    color: var(--text-primary) !important;
+    font-weight: 600 !important;
+    min-width: 150px !important;
+    font-size: 1rem !important;
+}
+
+/* Стилизованный select */
+#settings-modal #theme-select {
+    padding: 12px 16px !important;
+    border: 2px solid var(--border) !important;
+    border-radius: 10px !important;
+    background: var(--bg-primary) !important;
+    color: var(--text-primary) !important;
+    font-size: 1rem !important;
+    font-weight: 500 !important;
+    cursor: pointer !important;
+    transition: all 0.3s ease !important;
+    flex: 1 !important;
+    appearance: none !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 16px center !important;
+    background-size: 16px !important;
+}
+
+#settings-modal #theme-select:focus {
+    outline: none !important;
+    border-color: var(--accent) !important;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1) !important;
+}
+
+/* Секция профиля */
+#settings-modal .user-info {
+    background: linear-gradient(135deg, var(--accent), var(--accent-hover)) !important;
+    color: white !important;
+    padding: 1.5rem !important;
+    border-radius: 12px !important;
+    margin-bottom: 1.5rem !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 1rem !important;
+    box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3) !important;
+}
+
+#settings-modal .user-info .user-icon {
+    font-size: 2.5rem !important;
+    opacity: 0.9 !important;
+}
+
+#settings-modal .user-info span {
+    font-weight: 600 !important;
+    font-size: 1.2rem !important;
+}
+
+/* Аватар */
+#settings-modal .avatar-upload-section {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 1rem !important;
+    align-items: flex-start !important;
+    padding: 1.5rem !important;
+    background: var(--bg-primary) !important;
+    border-radius: 12px !important;
+    border: 2px dashed var(--border) !important;
+    transition: all 0.3s ease !important;
+}
+
+#settings-modal .avatar-upload-section:hover {
+    border-color: var(--accent) !important;
+    background: var(--bg-secondary) !important;
+}
+
+#settings-modal .avatar-preview-container {
+    width: 120px !important;
+    height: 120px !important;
+    border-radius: 50% !important;
+    border: 3px solid var(--accent) !important;
+    box-shadow: 0 4px 15px rgba(0, 123, 255, 0.2) !important;
+    transition: all 0.3s ease !important;
+}
+
+#settings-modal .avatar-preview-container:hover {
+    transform: scale(1.05) !important;
+    box-shadow: 0 6px 20px rgba(0, 123, 255, 0.3) !important;
+}
+
+/* Поле "О себе" */
+#settings-modal #about-me-input {
+    width: 100% !important;
+    padding: 1rem !important;
+    border: 2px solid var(--border) !important;
+    border-radius: 12px !important;
+    background: var(--bg-primary) !important;
+    color: var(--text-primary) !important;
+    font-size: 1rem !important;
+    min-height: 120px !important;
+    resize: vertical !important;
+    transition: all 0.3s ease !important;
+    font-family: 'Inter', sans-serif !important;
+}
+
+#settings-modal #about-me-input:focus {
+    outline: none !important;
+    border-color: var(--accent) !important;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1) !important;
+}
+
+/* Кнопки */
+#settings-modal .sidebar-button.menu-btn {
+    background: var(--accent) !important;
+    color: white !important;
+    border: none !important;
+    padding: 12px 24px !important;
+    border-radius: 10px !important;
+    cursor: pointer !important;
+    font-weight: 600 !important;
+    transition: all 0.3s ease !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    margin-top: 0.5rem !important;
+}
+
+#settings-modal .sidebar-button.menu-btn:hover {
+    background: var(--accent-hover) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3) !important;
+}
+
+/* Секция "О приложении" */
+#settings-modal .settings-section:last-child {
+    background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary)) !important;
+    text-align: center !important;
+    border: none !important;
+}
+
+#settings-modal .app-version {
+    color: var(--accent) !important;
+    font-weight: 700 !important;
+    font-size: 1.3rem !important;
+    margin-bottom: 0.5rem !important;
+}
+
+#settings-modal .app-description {
+    color: var(--text-secondary) !important;
+    font-size: 1rem !important;
+    line-height: 1.5 !important;
+}
+
+/* Футер модального окна */
+#settings-modal .modal-footer {
+    background: var(--bg-secondary) !important;
+    padding: 1.5rem 2.5rem !important;
+    border-top: 1px solid var(--border) !important;
+    display: flex !important;
+    justify-content: flex-end !important;
+}
+
+#settings-modal .close-button {
+    background: linear-gradient(135deg, var(--success), #20c997) !important;
+    color: white !important;
+    border: none !important;
+    padding: 14px 28px !important;
+    border-radius: 12px !important;
+    cursor: pointer !important;
+    font-weight: 600 !important;
+    font-size: 1rem !important;
+    transition: all 0.3s ease !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.8rem !important;
+    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3) !important;
+}
+
+#settings-modal .close-button:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4) !important;
+}
+
+/* Анимации */
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -48%) scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
+#settings-modal .modal-content {
+    animation: modalSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    #settings-modal .modal-content {
+        width: 98vw !important;
+        height: 95vh !important;
+        border-radius: 16px !important;
+    }
+    
+    #settings-modal .modal-body-scroll-area {
+        padding: 1.5rem !important;
+    }
+    
+    #settings-modal .settings-option {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 1rem !important;
+    }
+    
+    #settings-modal .tab-navigation {
+        padding: 0 1.5rem !important;
+    }
+    
+    #settings-modal .tab-button {
+        padding: 1rem 1.2rem !important;
+        font-size: 0.95rem !important;
+    }
+}
+/* Убедимся, что текст в выпадающем списке виден в темной теме */
+body.dark-theme #theme-select option {
+    color: var(--text-primary); /* Используем основной цвет текста для контраста */
+    background-color: var(--bg-input); /* Используем цвет фона ввода для подложки */
+}
+
+
+body.dark-theme .message-input {
+    color: var(--text-primary);
+    background-color: var(--bg-input);
+}
+
+/* Авторизация */
+.auth-form {
+    max-width: 400px;
+    margin: 0 auto;
+    padding: 2rem;
+    background: var(--bg-secondary);
+    border-radius: 16px; /* Чуть меньше закругление */
+    box-shadow: 0 12px 25px var(--shadow); /* Более выраженная тень */
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.auth-form h1 {
+    text-align: center;
+    margin-bottom: 2rem;
+    color: var(--accent);
+    font-weight: 700; /* Жирнее шрифт для заголовка */
+    font-size: 2.5rem; /* Немного крупнее заголовок */
+}
+
+.auth-form input {
+    width: 100%;
+    padding: 14px 18px; /* Немного меньше padding */
+    margin: 10px 0;
+    border: 1px solid var(--border); /* Более тонкая граница */
+    border-radius: 12px;
+    background: var(--input-bg);
+    color: var(--text-primary);
+    font-size: 1.05rem;
+    transition: all 0.3s ease;
+}
+
+.auth-form input:focus {
+    outline: none;
+    border-color: var(--accent); /* Цвет границы при фокусе */
+    transform: translateY(-2px); /* Небольшой подъем при фокусе */
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.2); /* Мягкая тень при фокусе */
+}
+
+.auth-form button {
+    width: 100%;
+    padding: 16px;
+    margin: 25px 0 15px; /* Увеличиваем верхний отступ */
+    border: none;
+    border-radius: 14px;
+    background: var(--accent);
+    color: var(--button-text);
+    font-size: 1.15rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px; /* Увеличиваем расстояние между элементами */
+}
+
+.auth-form button:hover {
+    background: var(--accent-hover);
+    transform: translateY(-3px); /* Чуть больше подъем */
+    box-shadow: 0 6px 18px var(--shadow); /* Более выраженная тень */
+}
+
+.auth-switch {
+    text-align: center;
+    margin-top: 1.5rem;
+    color: var(--text-secondary);
+}
+
+.auth-switch a {
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.auth-switch a:hover {
+    text-decoration: underline;
+}
+
+.app-logo {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.logo-icon {
+    font-size: 3rem;
+    display: block;
+    margin-bottom: 1rem;
+}
+
+/* Стили для основного приложения с сайдбаром */
+#app-container {
+    display: flex;
+    height: 100%; /* Занимаем всю высоту родителя (body) */
+    flex-direction: row; /* Сайдбар и основной контент располагаются горизонтально */
+    overflow: hidden; /* Предотвращаем прокрутку всего приложения */
+}
+
+.sidebar {
+    width: 280px; /* Увеличиваем ширину сайдбара */
+    background: var(--bg-secondary);
+    border-right: none; /* Убираем жесткую границу */
+    display: flex;
+    flex-direction: column;
+    padding: 2rem 1.5rem; /* Увеличиваем padding */
+    box-shadow: 4px 0 20px var(--shadow); /* Более мягкая тень */
+    z-index: 200;
+    flex-shrink: 0;
+}
+
+.main-content {
+    flex-grow: 1; /* Занимает все доступное горизонтальное пространство */
+    display: flex;
+    flex-direction: column; /* Шапка, чат и поле ввода располагаются вертикально */
+    background: var(--bg-primary);
+    height: 100%; /* Ключевое: main-content занимает всю доступную вертикальную высоту */
+    min-height: 0; /* Добавлено: Позволяет flex-контейнеру сжиматься */
+    overflow: hidden; /* Добавлено: Обрезает содержимое, которое выходит за пределы main-content */
+}
+
+/* Стили для сайдбара */
+.sidebar-header {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.sidebar-logo-icon {
+    font-size: 1.8rem;
+    color: var(--accent);
+}
+
+.sidebar-header h3 {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.chat-list {
+    list-style: none;
+    flex-grow: 1;
+    padding: 0;
+    margin: 0;
+}
+
+.chat-list-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.2rem 1rem;
+    margin-bottom: 0.7rem; /* Увеличиваем отступ */
+    border-radius: 12px; /* Более мягкие углы */
+    cursor: pointer;
+    color: var(--text-secondary);
+    transition: all 0.25s ease;
+}
+
+.chat-list-item:hover {
+    background: var(--bg-hover); /* Используем новую переменную для ховера */
+    color: var(--text-primary);
+    transform: translateX(5px); /* Небольшой сдвиг вправо при наведении */
+}
+
+.chat-list-item.active {
+    background: var(--accent);
+    color: var(--button-text);
+    font-weight: 600; /* Жирнее шрифт */
+    box-shadow: 0 6px 15px rgba(0, 123, 255, 0.25); /* Более выраженная тень */
+    transform: translateX(0);
+}
+
+.chat-list-item.active i {
+    color: var(--button-text);
+}
+
+.chat-list-item i {
+    font-size: 1.3rem; /* Чуть крупнее иконки */
+    color: var(--text-secondary);
+}
+
+.chat-list-item.active:hover {
+    background: var(--accent-hover);
+    transform: translateX(5px); /* Сохраняем сдвиг при наведении */
+}
+
+.sidebar-footer {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+    margin-top: 1rem;
+}
+
+/* Перемещаем кнопки в новое меню, тут их не будет */
+/* .sidebar-button { */
+/*     background: var(--bg-tertiary); */
+/*     color: var(--text-primary); */
+/*     border: none; */
+/*     padding: 14px 18px; */
+/*     border-radius: 12px; */
+/*     cursor: pointer; */
+/*     font-size: 1.05rem; */
+/*     font-weight: 500; */
+/*     transition: all 0.3s ease; */
+/*     display: flex; */
+/*     align-items: center; */
+/*     justify-content: center; */
+/*     gap: 0.8rem; */
+/* } */
+
+/*  */
+/* .sidebar-button:hover { */
+/*     background: var(--bg-hover); */
+/*     transform: translateY(-2px); */
+/*     box-shadow: 0 5px 15px var(--shadow); */
+/* } */
+
+/* Удаляем стили для account-lobby из sidebar, так как он перемещен */
+/* .account-lobby { */
+/*     padding-top: 1rem; */
+/*     border-top: 1px solid var(--border); */
+/*     margin-top: 1rem; */
+/*     display: flex; */
+/*     flex-direction: column; */
+/*     gap: 1rem; */
+/*     align-items: center; */
+/* } */
+
+/*  */
+/* .user-info-mini { */
+/*     display: flex; */
+/*     align-items: center; */
+/*     gap: 0.8rem; */
+/*     width: 100%; */
+/*     justify-content: center; */
+/* } */
+
+/*  */
+/* .avatar-small-wrapper { */
+/*     position: relative; */
+/*     width: 40px; */
+/*     height: 40px; */
+/*     border-radius: 50%; */
+/*     overflow: hidden; */
+/*     flex-shrink: 0; */
+/* } */
+
+/*  */
+/* .avatar-preview-image-small,  */
+/* .default-avatar-preview-small { */
+/*     width: 100%; */
+/*     height: 100%; */
+/*     object-fit: cover; */
+/*     display: flex; */
+/*     align-items: center; */
+/*     justify-content: center; */
+/*     font-size: 1.2rem; */
+/*     font-weight: bold; */
+/*     color: white; */
+/*     background-color: var(--accent); */
+/* } */
+
+/*  */
+/* .status-indicator { */
+/*     position: absolute; */
+/*     bottom: 0px; */
+/*     right: 0px; */
+/*     width: 12px; */
+/*     height: 12px; */
+/*     border-radius: 50%; */
+/*     border: 2px solid var(--bg-secondary); */
+/*     background-color: var(--text-secondary); */
+/* } */
+
+/*  */
+/* .status-indicator.online { */
+/*     background-color: var(--success); */
+/* } */
+
+/*  */
+/* .status-indicator.busy { */
+/*     background-color: var(--danger); */
+/* } */
+
+/*  */
+/* .status-indicator.away { */
+/*     background-color: var(--accent); */
+/* } */
+
+/*  */
+/* .lobby-username-text { */
+/*     color: var(--text-primary); */
+/*     font-weight: 500; */
+/*     font-size: 1.05rem; */
+/* } */
+
+/*  */
+/* .status-button { */
+/*     width: 100%; */
+/*     display: flex; */
+/*     justify-content: center; */
+/*     align-items: center; */
+/*     gap: 0.5rem; */
+/*     background: var(--bg-tertiary); */
+/*     color: var(--text-primary); */
+/*     border: none; */
+/*     padding: 10px 15px; */
+/*     border-radius: 10px; */
+/*     cursor: pointer; */
+/*     font-size: 0.95rem; */
+/*     font-weight: 500; */
+/*     transition: all 0.3s ease; */
+/* } */
+
+/*  */
+/* .status-button:hover { */
+/*     background: var(--bg-hover); */
+/*     transform: translateY(-2px); */
+/*     box-shadow: 0 5px 15px var(--shadow); */
+/* } */
+
+/*  */
+/* .status-button i { */
+/*     font-size: 0.8rem; */
+/* } */
+
+/* Остальные стили для header и chat-container */
+.header {
+    background: var(--bg-secondary);
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid var(--border);
+    flex-shrink: 0; /* Шапка не сжимается */
+}
+
+.header-title {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.header-icon {
+    font-size: 1.8rem;
+}
+
+.header h2 {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.header-actions {
+    display: none; /* Скрываем, так как кнопки перенесены */
+}
+
+/* Контейнер чата */
+.chat-container {
+    flex-grow: 1; /* Занимает все оставшееся вертикальное пространство после шапки */
+    display: flex;
+    flex-direction: column; /* Сообщения и поле ввода располагаются вертикально */
+    min-height: 0; /* Добавлено: Позволяет flex-контейнеру сжиматься */
+}
+
+.messages {
+    flex-grow: 1; /* Занимает все оставшееся вертикальное пространство */
+    overflow-y: auto; /* Разрешаем прокрутку */
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column; /* Сообщения внутри messages располагаются правильно */
+    gap: 1rem;
+    min-height: 0; /* Разрешаем сжиматься */
+}
+
+.message {
+    max-width: 75%; /* Чуть больше ширина */
+    padding: 0.9rem 1.2rem; /* Немного меньше padding */
+    border-radius: 20px; /* Более закругленные углы */
+    margin: 0.4rem 0;
+    position: relative;
+    word-wrap: break-word;
+    animation: messageAppear 0.3s ease-out;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); /* Легкая тень */
+}
+
+.message-reply-preview {
+    background: var(--bg-primary);
+    border-left: 5px solid var(--accent); /* Чуть толще граница */
+    padding: 0.6rem 0.9rem;
+    margin-bottom: 0.6rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.message-reply-preview:hover {
+    background: var(--bg-hover);
+}
+
+.message-reply-preview .reply-label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    display: block;
+    margin-bottom: 0.1rem;
+}
+
+.message-reply-preview strong {
+    font-size: 0.85rem;
+    color: var(--accent);
+    display: block;
+    margin-bottom: 0.1rem;
+}
+
+.message-reply-preview p {
+    font-size: 0.85rem;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin: 0;
+}
+
+.message-favorite-icon {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin-left: 0.6rem;
+    transition: color 0.2s ease;
+}
+
+.message-favorite-icon.active {
+    color: #ffda47; /* Более насыщенный золотой */
+}
+
+.message.own {
+    align-self: flex-end;
+    background: var(--message-own-bg);
+    border-bottom-right-radius: 8px; /* Меньший радиус */
+}
+
+.message.other {
+    align-self: flex-start;
+    background: var(--message-bg);
+    border-bottom-left-radius: 8px; /* Меньший радиус */
+}
+
+.message strong {
+    color: var(--accent);
+    font-size: 0.95rem;
+    margin-bottom: 0.4rem;
+    display: block;
+}
+
+.message p {
+    margin: 0.4rem 0;
+    line-height: 1.5;
+    color: var(--text-primary);
+}
+
+.message small {
+    color: var(--text-secondary);
+    font-size: 0.7rem;
+    display: block;
+    text-align: right;
+    margin-top: 0.4rem;
+}
+
+.welcome-message {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--text-secondary);
+}
+
+.welcome-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+}
+
+.welcome-message h3 {
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+}
+
+/* Поле ввода сообщения */
+.message-input {
+    padding: 1.2rem 1.5rem; /* Уменьшаем padding */
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border); /* Более тонкая граница */
+    position: relative;
+    min-height: 70px; /* Уменьшаем минимальную высоту */
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+}
+
+.message-input.favorites-collapsed {
+    max-height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    overflow: hidden;
+    border-top: none;
+    min-height: 0;
+}
+
+.message-input-container {
+    display: flex;
+    gap: 0.8rem; /* Уменьшаем расстояние */
+    align-items: center;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.input-wrapper {
+    position: relative;
+    flex: 1;
+}
+
+.message-input input {
+    width: 100%;
+    padding: 13px 18px; /* Немного меньше padding */
+    border: 1px solid var(--border); /* Более тонкая граница */
+    border-radius: 22px; /* Чуть меньше радиус */
+    background: var(--input-bg);
+    color: var(--text-primary);
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    height: 48px; /* Чуть меньше высота */
+}
+
+.message-input input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.15); /* Мягкая тень */
+}
+
+.input-border {
+    position: absolute;
+    bottom: -1px; /* Корректируем положение */
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: var(--accent);
+    transform: scaleX(0);
+    transition: transform 0.3s ease;
+}
+
+.message-input input:focus + .input-border {
+    transform: scaleX(1);
+}
+
+.emoji-button {
+    background: var(--bg-tertiary); /* Новый фон */
+    color: var(--text-secondary); /* Новый цвет иконки */
+    border: none;
+    padding: 10px; /* Уменьшаем padding */
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1.1rem; /* Чуть меньше размер иконки */
+    transition: all 0.3s ease;
+    width: 48px; /* Новая ширина */
+    height: 48px; /* Новая высота */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.emoji-button:hover {
+    background: var(--bg-hover); /* Новый фон при наведении */
+    color: var(--text-primary); /* Цвет иконки при наведении */
+    transform: scale(1.05); /* Менее агрессивное масштабирование */
+}
+
+.emoji-button.active {
+    background: var(--accent); /* Фон при активном состоянии */
+    color: var(--button-text); /* Цвет иконки при активном состоянии */
+    transform: scale(1.05);
+}
+
+.send-button {
+    background: var(--accent);
+    color: var(--button-text);
+    border: none;
+    padding: 0; /* Убираем padding */
+    border-radius: 50%;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    white-space: nowrap;
+    width: 48px; /* Новая ширина */
+    height: 48px; /* Новая высота */
+}
+
+.send-button:hover {
+    background: var(--accent-hover);
+    transform: translateY(-1px); /* Меньше подъем */
+    box-shadow: 0 4px 12px var(--shadow); /* Мягче тень */
+}
+
+.send-text {
+    display: none;
+}
+
+.send-icon {
+    display: block;
+    font-size: 1.4rem; /* Чуть меньше размер иконки */
+}
+
+/* Picker эмодзи */
+.emoji-picker {
+    position: absolute;
+    bottom: 100%;
+    left: 0; /* Сдвигаем влево */
+    background: var(--bg-primary);
+    border: 1px solid var(--border); /* Более тонкая граница */
+    border-radius: 12px; /* Меньше радиус */
+    padding: 0.8rem; /* Меньше padding */
+    box-shadow: 0 8px 25px var(--shadow); /* Более мягкая тень */
+    z-index: 1000;
+    margin-bottom: 0.8rem;
+    width: 320px; /* Фиксируем ширину */
+}
+
+.emoji-picker-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.8rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.emoji-picker-header h4 {
+    color: var(--text-primary);
+    font-size: 1rem;
+}
+
+.emoji-close {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 1.4rem;
+    cursor: pointer;
+    padding: 0;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+}
+
+.emoji-close:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.emoji-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr); /* Изменяем количество колонок */
+    gap: 0.4rem; /* Меньше расстояние */
+    max-height: 180px;
+    overflow-y: auto;
+}
+
+.emoji-item {
+    font-size: 1.4rem;
+    cursor: pointer;
+    padding: 0.2rem;
+    border-radius: 6px;
+    text-align: center;
+    transition: all 0.2s ease;
+}
+
+.emoji-item:hover {
+    background: var(--bg-secondary);
+    transform: scale(1.15);
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* Модальное окно */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6); /* Чуть темнее фон */
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal.modal-active {
+    display: flex; /* Показываем модальное окно при активации */
+}
+/* Убираем .modal-backdrop, так как фон теперь в .modal */
+/* .modal-backdrop { */
+/*     position: absolute; */
+/*     top: 0; */
+/*     left: 0; */
+/*     width: 100%; */
+/*     height: 100%; */
+/*     background: rgba(0, 0, 0, 0.5); */
+/* } */
+
+.modal-content {
+    background: var(--bg-primary);
+    /* Удаляем полноэкранные стили по умолчанию, теперь они будут для settings-modal отдельно */
+    /* border-radius: 0; */
+    /* width: 100vw; */
+    /* height: 100vh; */
+    display: flex;
+    flex-direction: column;
+    /* box-shadow: none; */
+}
+
+/* Стили для модального окна настроек (полноэкранного) */
+#settings-modal .modal-content {
+    width: 100vw;
+    height: 100vh;
+    border-radius: 0;
+    box-shadow: none; /* Убеждаемся, что тень убрана для полноэкранного режима */
+}
+
+/* Стили для модального окна профиля (не полноэкранного) */
+#profile-modal .modal-content {
+    width: 95%; /* Чуть больше ширина */
+    max-width: 550px; /* Увеличиваем максимальную ширину */
+    height: auto;
+    max-height: 85vh; /* Увеличиваем максимальную высоту */
+    background: var(--bg-primary);
+    border-radius: 18px; /* Чуть больше радиус */
+    box-shadow: 0 15px 40px var(--shadow); /* Более выраженная тень */
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* Скрываем излишки, если контент больше окна */
+}
+
+/* Стили для области прокрутки внутри модального окна */
+.modal-body-scroll-area {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 0 2.2rem; /* Увеличиваем горизонтальный padding */
+    display: flex;
+    flex-direction: column;
+}
+
+/* Стили для навигации по вкладкам */
+.tab-navigation {
+    display: flex;
+    justify-content: flex-start;
+    margin-bottom: 0;
+    border-bottom: 1px solid var(--border); /* Более тонкая граница */
+    padding: 0 2.2rem; /* Увеличиваем горизонтальный padding */
+    flex-shrink: 0;
+}
+
+.tab-button {
+    background: none;
+    border: none;
+    padding: 1rem 1.6rem; /* Чуть больше padding */
+    font-size: 1.05rem; /* Немного меньше шрифт */
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border-bottom: 3px solid transparent;
+}
+
+.tab-button:hover {
+    color: var(--text-primary);
+    background: var(--bg-hover); /* Фон при наведении */
+}
+
+.tab-button.active {
+    color: var(--accent);
+    border-bottom: 3px solid var(--accent);
+    background: var(--bg-secondary); /* Активный фон */
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+}
+
+/* Стили для содержимого вкладок */
+.tab-content {
+    /* display: none; Удаляем, теперь используем visibility и opacity */
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+    flex-direction: column;
+
+    /* Свойства для анимации */
+    visibility: hidden; /* Скрываем по умолчанию */
+    opacity: 0;
+    max-height: 0; /* Высота 0 для скрытых вкладок */
+    transition: visibility 0.6s ease, opacity 0.6s ease, max-height 0.6s ease; /* Плавный переход */
+    overflow: hidden; /* Обрезаем содержимое, когда вкладка скрыта */
+}
+
+.tab-content.active {
+    /* display: flex; Удаляем, теперь используем visibility и opacity */
+    flex-grow: 1;
+    min-height: 0;
+
+    /* Свойства для активной вкладки */
+    visibility: visible;
+    opacity: 1;
+    max-height: 1000px; /* Достаточно большая высота для отображения содержимого */
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0;
+    padding: 1.8rem 2.2rem 1.2rem; /* Корректируем padding */
+    border-bottom: 1px solid var(--border); /* Более тонкая граница */
+    flex-shrink: 0;
+}
+
+.modal-header h3 {
+    color: var(--text-primary);
+    font-weight: 700; /* Жирнее шрифт */
+    font-size: 1.6rem; /* Крупнее шрифт */
+}
+
+.modal-close {
+    background: var(--bg-tertiary); /* Новый фон */
+    border: none;
+    color: var(--text-secondary);
+    font-size: 1.6rem; /* Немного меньше размер */
+    cursor: pointer;
+    padding: 0;
+    width: 38px; /* Меньше размер */
+    height: 38px; /* Меньше размер */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+}
+
+.modal-close:hover {
+    background: var(--bg-hover); /* Новый фон при наведении */
+    color: var(--text-primary);
+}
+
+.settings-content {
+    margin-bottom: 2.5rem; /* Чуть больше отступ */
+}
+
+.settings-section {
+    margin-bottom: 2.5rem; /* Чуть больше отступ */
+    min-height: 0;
+}
+
+/* Удаляем старые специфичные стили для раздела "О приложении" */
+/* .modal-content > .settings-section { */
+/*     flex-shrink: 0; */
+/*     padding: 1rem 2rem; */
+/*     border-top: 2px solid var(--border); */
+/*     margin-top: 1.5rem; */
+/* } */
+
+.settings-section h4 {
+    color: var(--text-primary);
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.settings-option {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.settings-option label {
+    color: var(--text-primary);
+    min-width: 120px;
+}
+
+.settings-option textarea {
+    width: 100%;
+    padding: 10px 15px;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    background: var(--input-bg);
+    color: var(--text-primary);
+    font-size: 1rem;
+    min-height: 100px; /* Минимальная высота для поля описания */
+    resize: vertical; /* Разрешаем изменение размера только по вертикали */
+    flex: 1;
+    box-sizing: border-box; /* Убеждаемся, что padding не увеличивает высоту */
+}
+
+.settings-option select {
+    padding: 10px 15px;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    background: var(--input-bg);
+    color: var(--text-primary);
+    font-size: 1rem;
+    flex: 1;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--bg-secondary);
+    border-radius: 15px;
+    margin-bottom: 1rem;
+}
+
+.user-icon {
+    font-size: 2rem;
+}
+
+.app-version {
+    color: var(--accent);
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.app-description {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.modal-footer {
+    text-align: right;
+    padding: 1.2rem 2.2rem 1.8rem; /* Корректируем padding */
+    border-top: 1px solid var(--border); /* Более тонкая граница */
+    margin-top: 0;
+    flex-shrink: 0;
+}
+
+.close-button {
+    background: var(--accent);
+    color: var(--button-text);
+    border: none;
+    padding: 13px 28px; /* Чуть больше padding */
+    border-radius: 14px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem; /* Чуть больше расстояние */
+}
+
+.close-button:hover {
+    background: var(--accent-hover);
+    transform: translateY(-1px); /* Меньше подъем */
+}
+
+/* Уведомления */
+.notification {
+    position: fixed;
+    top: 25px; /* Чуть ниже */
+    right: 25px; /* Чуть левее */
+    background: var(--success);
+    color: white;
+    padding: 14px 24px; /* Корректируем padding */
+    border-radius: 10px; /* Меньше радиус */
+    box-shadow: 0 4px 15px var(--shadow); /* Мягче тень */
+    z-index: 2000;
+    animation: slideIn 0.3s ease-out;
+}
+
+.notification.error {
+    background: var(--danger);
+}
+
+.notification.hidden {
+    animation: slideOut 0.3s ease-out forwards;
+}
+
+/* Анимации */
+@keyframes messageAppear {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOut {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .auth-form {
+        width: 90%;
+        padding: 1.5rem;
+    }
+
+    .header {
+        padding: 1rem;
+    }
+
+    .header-title h2 {
+        font-size: 1.2rem;
+    }
+
+    .message {
+        max-width: 85%;
+    }
+
+    .message-input-container {
+        gap: 0.5rem;
+    }
+
+    .send-button {
+        padding: 12px 20px;
+    }
+
+    .send-text {
+        display: none;
+    }
+
+    .send-icon {
+        display: block;
+        font-size: 1.2rem;
+    }
+
+    .modal-content {
+        min-width: unset;
+        width: 95%;
+        padding: 1.5rem;
+    }
+
+    .emoji-grid {
+        grid-template-columns: repeat(6, 1fr);
+    }
+}
+
+@media (max-width: 480px) {
+    .auth-form h1 {
+        font-size: 1.8rem;
+    }
+
+    .header-actions {
+        gap: 0.5rem;
+    }
+
+    .header-button {
+        padding: 8px 12px;
+        font-size: 1rem;
+    }
+
+    .emoji-grid {
+        grid-template-columns: repeat(5, 1fr);
+    }
+
+    .settings-option {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+}
+
+/* Кастомный скроллбар */
+.messages::-webkit-scrollbar {
+    width: 6px;
+}
+
+.messages::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+    border-radius: 3px;
+}
+
+.messages::-webkit-scrollbar-thumb {
+    background: var(--accent);
+    border-radius: 3px;
+}
+
+.messages::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-hover);
+}
+
+.emoji-grid::-webkit-scrollbar {
+    width: 4px;
+}
+
+.emoji-grid::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+    border-radius: 2px;
+}
+
+.emoji-grid::-webkit-scrollbar-thumb {
+    background: var(--text-secondary);
+    border-radius: 2px;
+}
+
+/* Улучшенные поля ввода */
+.input-group {
+    position: relative;
+    margin-bottom: 1.5rem;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 15px;
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    background: var(--input-bg);
+    color: var(--text-primary);
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.input-group input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.input-group label {
+    position: absolute;
+    left: 15px;
+    top: 15px;
+    color: var(--text-secondary);
+    pointer-events: none;
+    transition: all 0.3s ease;
+    background: var(--input-bg);
+    padding: 0 5px;
+}
+
+.input-group input:focus ~ label,
+.input-group input:not(:placeholder-shown) ~ label {
+    top: -10px;
+    left: 10px;
+    font-size: 0.8rem;
+    color: var(--accent);
+    background: var(--input-bg);
+}
+
+.input-group input::placeholder {
+    color: transparent;
+}
+
+/* Эффекты при наведении для кнопок */
+.button-icon {
+    transition: transform 0.3s ease;
+}
+
+.auth-button:hover .button-icon,
+.close-button:hover .button-icon {
+    transform: scale(1.2) rotate(5deg);
+}
+
+/* Эффект пульсации для новых сообщений */
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+    100% { transform: scale(1); }
+}
+
+.message:last-child {
+    animation: pulse 0.6s ease;
+}
+
+/* Эффект свечения для активных элементов */
+.header-button:focus,
+.emoji-button:focus,
+.send-button:focus,
+.close-button:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.3);
+}
+
+/* Плавные переходы для всех интерактивных элементов */
+button, input, select, textarea {
+    transition: all 0.3s ease;
+}
+
+/* Улучшенная читаемость для длинных сообщений */
+.message p {
+    line-height: 1.6;
+    word-break: break-word;
+}
+
+/* Контрастные тени для лучшей видимости */
+.light-theme {
+    --shadow: rgba(0, 0, 0, 0.08);
+}
+
+.dark-theme {
+    --shadow: rgba(0, 0, 0, 0.3);
+}
+
+/* Улучшенная доступность для фокуса */
+input:focus,
+button:focus,
+select:focus,
+.chat-list-item:focus {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-color: var(--accent); /* Добавляем изменение цвета границы при фокусе */
+}
+
+/* Анимация появления для модального окна */
+.modal-content {
+    animation: modalAppear 0.3s ease-out;
+    box-shadow: 0 15px 30px var(--shadow); /* Добавляем тень для модального окна */
+}
+
+@keyframes modalAppear {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -48%) scale(0.95); /* Менее агрессивное масштабирование */
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
+/* Анимация исчезновения для модального окна */
+.modal.modal-hiding .modal-content {
+    animation: modalDisappear 0.3s ease-out forwards;
+}
+
+@keyframes modalDisappear {
+    from {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+    to {
+        opacity: 0;
+        transform: translate(-50%, -48%) scale(0.9);
+        display: none; /* Скрываем элемент после завершения анимации */
+    }
+}
+
+/* Микро-анимации для интерактивных элементов */
+.header-button,
+.emoji-button,
+.send-button,
+.close-button {
+    position: relative;
+    overflow: hidden;
+}
+
+.header-button:after,
+.emoji-button:after,
+.send-button:after,
+.close-button:after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 5px;
+    height: 5px;
+    background: rgba(255, 255, 255, 0.5);
+    opacity: 0;
+    border-radius: 100%;
+    transform: scale(1, 1) translate(-50%);
+    transform-origin: 50% 50%;
+}
+
+.header-button:focus:not(:active)::after,
+.emoji-button:focus:not(:active)::after,
+.send-button:focus:not(:active)::after,
+.close-button:focus:not(:active)::after {
+    animation: ripple 1s ease-out;
+}
+
+@keyframes ripple {
+    0% {
+        transform: scale(0, 0);
+        opacity: 1;
+    }
+    20% {
+        transform: scale(25, 25);
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+        transform: scale(40, 40);
+    }
+}
+
+/* Адаптивные улучшения для очень маленьких экранов */
+@media (max-width: 320px) {
+    .auth-form {
+        padding: 1rem;
+    }
+
+    .header {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+
+    .header-actions {
+        justify-content: center;
+    }
+
+    .message {
+        max-width: 95%;
+    }
+
+    .emoji-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+/* Поддержка высококонтрастного режима */
+@media (prefers-contrast: high) {
+    .light-theme {
+        --border: #000000;
+        --shadow: rgba(0, 0, 0, 0.5);
+    }
+
+    .dark-theme {
+        --border: #ffffff;
+        --shadow: rgba(255, 255, 255, 0.3);
+    }
+}
+
+/* Поддержка reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* Окно предпросмотра ответа */
+.reply-preview-container {
+    background: var(--bg-secondary);
+    border-top: 2px solid var(--border);
+    padding: 0.8rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    max-width: 100%;
+    margin: 0;
+    flex-shrink: 0; /* Не сжимать этот элемент */
+}
+
+.reply-info {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.reply-label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+    margin-bottom: 0.2rem;
+}
+
+.reply-username {
+    font-weight: 600;
+    color: var(--accent);
+    font-size: 0.9rem;
+    margin-bottom: 0.2rem;
+}
+
+.reply-text {
+    font-size: 0.85rem;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+.clear-reply-button {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+}
+
+.clear-reply-button:hover {
+    background: var(--border);
+    color: var(--text-primary);
+}
+
+/* Подсветка сообщения при прокрутке к нему */
+.message.highlighted {
+    animation: highlightMessage 1.5s ease-out forwards;
+}
+
+@keyframes highlightMessage {
+    0% {
+        box-shadow: 0 0 25px 5px var(--accent); /* Увеличена яркость */
+        transform: scale(1.02);
+    }
+    100% {
+        box-shadow: none;
+        transform: scale(1);
+    }
+}
+
+/* Контекстное меню */
+.context-menu {
+    position: absolute;
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    box-shadow: 0 8px 20px var(--shadow); /* Более мягкая тень для контекстного меню */
+    z-index: 2000; /* Выше других элементов */
+    min-width: 180px;
+    padding: 0.5rem 0;
+}
+
+.context-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 0.7rem 1.2rem;
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.context-menu-item:hover {
+    background: var(--bg-secondary);
+    color: var(--accent);
+}
+
+.context-menu-item i {
+    font-size: 1.1rem;
+    width: 20px; /* Фиксированная ширина для иконок */
+    text-align: center;
+}
+
+.context-menu-item.edit-option {
+    border-top: 1px solid var(--border);
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* Стили для аватаров */
+.avatar-upload-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    margin-top: 1.5rem;
+    align-items: flex-start;
+}
+
+.avatar-preview-container {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: var(--bg-secondary);
+    border: 2px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+}
+
+.avatar-preview-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.default-avatar-preview {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: white;
+    background-color: var(--accent); /* Пример цвета, будет переопределен JS */
+}
+
+.avatar-upload-section input[type="file"] {
+    border: 1px solid var(--border);
+    padding: 8px;
+    border-radius: 8px;
+    background: var(--input-bg);
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    max-width: 250px; /* Ограничиваем ширину */
+}
+
+.avatar-upload-section button {
+    background: var(--accent);
+    color: var(--button-text);
+    border: none;
+    padding: 10px 20px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    max-width: 200px;
+}
+
+.avatar-upload-section button:hover {
+    background: var(--accent-hover);
+    transform: translateY(-1px);
+}
+
+/* Стили для аватаров в сообщениях */
+.message {
+    display: flex; /* Делаем сообщение flex-контейнером */
+    align-items: flex-start; /* Выравниваем элементы по верху */
+    gap: 12px; /* Увеличиваем расстояние */
+}
+
+.message.own {
+    flex-direction: row-reverse; /* Для своих сообщений аватар справа */
+}
+
+.message-avatar-container {
+    width: 44px; /* Чуть крупнее аватар */
+    height: 44px; /* Чуть крупнее аватар */
+    min-width: 44px;
+    min-height: 44px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: var(--bg-tertiary); /* Используем bg-tertiary */
+    border: 1px solid var(--border); /* Более тонкая граница */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem; /* Размер шрифта для дефолтного аватара */
+    color: var(--text-secondary); /* Цвет текста для дефолтного аватара */
+}
+
+.message-avatar {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.message-content-wrapper {
+    display: flex;
+    flex-direction: column;
+    max-width: calc(100% - 60px); /* Учитываем новый размер аватара и гэп */
+}
+
+.message.other .message-content-wrapper {
+    align-items: flex-start;
+}
+
+.message.own .message-content-wrapper {
+    align-items: flex-end;
+}
+
+.message.other strong {
+    text-align: left;
+}
+
+.message.own strong {
+    text-align: right;
+}
+
+/* Дополнительные корректировки для мобильных устройств */
+@media (max-width: 768px) {
+    .message-input input {
+        padding: 10px 15px;
+        height: 40px;
+        border-radius: 20px; /* Немного меньше радиус */
+    }
+    .emoji-button,
+    .send-button {
+        width: 40px;
+        height: 40px;
+        font-size: 1rem;
+    }
+    .send-icon {
+        font-size: 1.2rem;
+    }
+    .avatar-upload-section {
+        align-items: center;
+    }
+    .avatar-upload-section input[type="file"] {
+        max-width: 100%;
+    }
+    .avatar-upload-section button {
+        max-width: 100%;
+    }
+}
+
+/* Стили для выпадающего списка выбора темы */
+#theme-select {
+    width: 100%;
+    max-width: 35%; /* Чуть больше ширина */
+    padding: 0.6rem 1rem; /* Меньше padding */
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background-color: var(--bg-input);
+    color: var(--text-primary);
+    font-size: 0.95rem; /* Немного меньше шрифт */
+    cursor: pointer;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.8rem center; /* Сдвигаем иконку */
+    background-size: 1.3em; /* Меньше размер иконки */
+}
+
+#theme-select:focus {
+    border-color: var(--accent);
+    outline: none;
+}
+
+/* Стили для кнопки загрузки аватара */
+.avatar-upload-section .sidebar-button {
+
+/* Модальное окно профиля */
+#profile-modal .modal-content {
+    width: 90%;
+    max-width: 500px; /* Ограничиваем максимальную ширину */
+    height: auto;
+    max-height: 80vh; /* Ограничиваем максимальную высоту */
+    background: var(--bg-primary);
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* Скрываем излишки, если контент больше окна */
+}
+
+#profile-modal .modal-backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+}
+
+#profile-modal .modal-header {
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+}
+
+#profile-modal .modal-body-scroll-area {
+    padding: 1.5rem 2rem;
+    flex-grow: 1;
+    overflow-y: auto;
+}
+
+.profile-info-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    text-align: center;
+}
+
+.profile-avatar-large {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 3px solid var(--accent); /* Используем переменную accent */
+    box-shadow: 0 5px 15px var(--shadow); /* Мягкая тень для аватара */
+    flex-shrink: 0;
+}
+
+.profile-avatar-large .avatar-preview-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.profile-avatar-large .default-avatar-preview {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 3rem;
+    font-weight: bold;
+    color: var(--text-primary);
+    background-color: var(--bg-secondary);
+}
+
+.about-me-text {
+    color: var(--text-secondary);
+    font-size: 1rem;
+    line-height: 1.5;
+    max-width: 100%;
+    word-wrap: break-word;
+}
+
+#profile-modal .modal-footer {
+    padding: 1rem 2rem 1.5rem;
+    border-top: 1px solid var(--border);
+    flex-shrink: 0;
+}
+
+/* Медиа-запросы для адаптивности */
+@media (max-width: 600px) {
+    #profile-modal .modal-content {
+        width: 95%;
+        max-width: none; /* Убираем ограничение max-width на маленьких экранах */
+        margin: 10px; /* Небольшой отступ от краев */
+    }
+
+    #profile-modal .modal-header,
+    #profile-modal .modal-body-scroll-area,
+    #profile-modal .modal-footer {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+    .profile-avatar-large {
+        width: 100px;
+        height: 100px;
+    }
+
+    .profile-avatar-large .default-avatar-preview {
+        font-size: 2.5rem;
+    }
+}
+/* style.css */
+
+/* Стили для секции поиска пользователей */
+.user-search-section {
+    padding: 10px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+#user-search-input {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid var(--input-border);
+    border-radius: 5px;
+    background-color: var(--input-background);
+    color: var(--text-color);
+    margin-bottom: 5px;
+}
+
+.search-results-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    background-color: var(--background-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    max-height: 200px; /* Ограничиваем высоту для прокрутки */
+    overflow-y: auto;
+    display: none; /* Изначально скрыт */
+}
+
+.search-result-item {
+    display: flex;
+    align-items: center;
+    padding: 8px 10px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.search-result-item:last-child {
+    border-bottom: none;
+}
+
+.search-result-item:hover {
+    background-color: var(--hover-background);
+}
+
+.search-result-item .user-avatar-small {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background-color: var(--avatar-background);
+    background-size: cover;
+    background-position: center;
+    margin-right: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white; /* Для дефолтного аватара */
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.search-result-item.no-results {
+    color: var(--text-secondary);
+    font-style: italic;
+    text-align: center;
+}
+
+/* Стили для лобби аккаунта */
+.account-lobby {
+    padding-top: 1rem; /* Отступ сверху */
+    border-top: 1px solid var(--border); /* Разделительная линия */
+    margin-top: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    align-items: center; /* Центрируем содержимое */
+}
+
+.user-info-mini {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    width: 100%; /* Занимает всю доступную ширину */
+    justify-content: center; /* Центрируем содержимое */
+}
+
+.avatar-small-wrapper {
+    position: relative;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.avatar-preview-image-small,
+.default-avatar-preview-small {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: white;
+    background-color: var(--accent); /* Пример цвета, будет переопределен JS */
+}
+
+.status-indicator {
+    position: absolute;
+    bottom: 0px;
+    right: 0px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid var(--bg-secondary); /* Цвет границы индикатора */
+    background-color: var(--text-secondary); /* Дефолтный (оффлайн) */
+}
+
+.status-indicator.online {
+    background-color: var(--success);
+}
+
+.status-indicator.busy {
+    background-color: var(--danger);
+}
+
+.status-indicator.away {
+    background-color: var(--accent);
+}
+
+.lobby-username-text {
+    color: var(--text-primary);
+    font-weight: 500;
+    font-size: 1.05rem;
+}
+
+.status-button {
+    width: 100%; /* Занимает всю ширину футера */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    border: none;
+    padding: 10px 15px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.status-button:hover {
+    background: var(--bg-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px var(--shadow);
+}
+
+.status-button i {
+    font-size: 0.8rem;
+}
+
+/* Новые стили для всплывающего меню в правом нижнем углу */
+.bottom-right-menu {
+    position: fixed;
+    bottom: 80px; /* Отступ от кнопки-триггера */
+    right: 20px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 15px;
+    box-shadow: 0 8px 30px var(--shadow);
+    padding: 1rem;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    width: 250px; /* Фиксированная ширина */
+    transition: all 0.3s ease-out;
+    transform: translateY(20px); /* Начальное смещение для анимации */
+    opacity: 0;
+    visibility: hidden;
+}
+
+.bottom-right-menu.active {
+    transform: translateY(0);
+    opacity: 1;
+    visibility: visible;
+}
+
+.bottom-right-menu .account-lobby {
+    padding: 0.5rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 0.5rem;
+    margin-top: 0; /* Убираем верхний отступ */
+}
+
+.bottom-right-menu .user-info-mini {
+    justify-content: flex-start; /* Выравниваем влево */
+}
+
+.bottom-right-menu .status-button {
+    background: var(--bg-primary);
+    padding: 10px 15px; /* Увеличиваем padding */
+    border-radius: 10px; /* Увеличиваем радиус */
+    font-size: 0.95rem; /* Увеличиваем размер шрифта */
+}
+
+.menu-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+}
+
+.bottom-right-menu .sidebar-button {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    border: none;
+    padding: 14px 18px; /* Увеличиваем padding */
+    border-radius: 12px; /* Увеличиваем радиус */
+    font-size: 1.05rem; /* Увеличиваем размер шрифта */
+    font-weight: 500;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start; /* Выравниваем текст влево */
+    gap: 0.8rem;
+}
+
+.bottom-right-menu .sidebar-button:hover {
+    background: var(--bg-hover);
+    transform: none; /* Отключаем translateY при наведении */
+    box-shadow: none;
+}
+
+.bottom-right-menu .logout-button {
+    color: var(--danger);
+}
+
+.bottom-right-menu .logout-button i {
+    color: var(--danger);
+}
+
+/* Стили для кнопки-триггера меню */
+.menu-trigger-button {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: var(--button-text);
+    border: none;
+    box-shadow: 0 4px 15px var(--shadow);
+    font-size: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 1001; /* Выше меню */
+    transition: all 0.3s ease;
+}
+
+.menu-trigger-button:hover {
+    background: var(--accent-hover);
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 6px 20px var(--shadow);
+}
+
+.menu-trigger-button.active {
+    transform: rotate(90deg); /* Поворот иконки при активном меню */
+}
+
+@media (max-width: 768px) {
+    .menu-trigger-button {
+        width: 45px;
+        height: 45px;
+        font-size: 1.3rem;
+        bottom: 15px;
+        right: 15px;
+    }
+    .bottom-right-menu {
+        width: 220px;
+        right: 15px;
+        bottom: 70px;
+    }
+}
+
+/* Новые стили для всплывающего меню в правом нижнем углу */
+.bottom-right-menu {
+    position: fixed;
+    bottom: 80px;
+    right: 20px;
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+    border-radius: 15px;
+    box-shadow: 0 8px 30px var(--shadow);
+    padding: 1.5rem;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    width: 280px;
+    transition: all 0.3s ease-out;
+    transform: translateY(20px);
+    opacity: 0;
+    visibility: hidden;
+}
+
+.bottom-right-menu.active {
+    transform: translateY(0);
+    opacity: 1;
+    visibility: visible;
+}
+
+.bottom-right-menu .account-lobby {
+    padding: 0;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 0.5rem;
+    margin-top: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.bottom-right-menu .user-info-mini {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    width: 100%;
+    justify-content: flex-start;
+}
+
+.bottom-right-menu .avatar-small-wrapper {
+    position: relative;
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.bottom-right-menu .avatar-preview-image-small,
+.bottom-right-menu .default-avatar-preview-small {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    font-weight: bold;
+    color: white;
+}
+
+.bottom-right-menu .status-indicator {
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid var(--bg-primary);
+}
+
+.bottom-right-menu .status-indicator.online {
+    background-color: var(--success);
+}
+
+.bottom-right-menu .status-indicator.busy {
+    background-color: var(--danger);
+}
+
+.bottom-right-menu .status-indicator.away {
+    background-color: var(--accent);
+}
+
+.bottom-right-menu .status-indicator.offline {
+    background-color: var(--text-secondary);
+}
+
+.bottom-right-menu .lobby-username-text {
+    color: var(--text-primary);
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.bottom-right-menu .status-button {
+    width: 100%;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 0.8rem;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border: none;
+    padding: 12px 16px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.bottom-right-menu .status-button:hover {
+    background: var(--bg-hover);
+    transform: translateY(-1px);
+}
+
+.bottom-right-menu .status-button i {
+    font-size: 0.8rem;
+    color: var(--success);
+}
+
+.bottom-right-menu .status-button:hover i {
+    transform: scale(1.1);
+}
+
+.menu-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+}
+
+.bottom-right-menu .sidebar-button {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border: none;
+    padding: 14px 18px;
+    border-radius: 12px;
+    font-size: 1.05rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.8rem;
+    cursor: pointer;
+    width: 100%;
+    text-align: left;
+}
+
+.bottom-right-menu .sidebar-button:hover {
+    background: var(--bg-hover);
+    transform: translateY(-1px);
+}
+
+.bottom-right-menu .sidebar-button i {
+    font-size: 1.1rem;
+    width: 20px;
+    text-align: center;
+}
+
+.bottom-right-menu .logout-button {
+    color: var(--danger);
+    border-top: 1px solid var(--border);
+    margin-top: 0.5rem;
+    padding-top: 1rem;
+}
+
+.bottom-right-menu .logout-button i {
+    color: var(--danger);
+}
+
+/* Стили для кнопки-триггера меню */
+.menu-trigger-button {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: var(--button-text);
+    border: none;
+    box-shadow: 0 4px 20px var(--shadow);
+    font-size: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 1001;
+    transition: all 0.3s ease;
+}
+
+.menu-trigger-button:hover {
+    background: var(--accent-hover);
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 6px 25px var(--shadow);
+}
+
+.menu-trigger-button.active {
+    transform: rotate(90deg);
+    background: var(--accent-hover);
+}
+
+/* Адаптивность для мобильных устройств */
+@media (max-width: 768px) {
+    .menu-trigger-button {
+        width: 55px;
+        height: 55px;
+        font-size: 1.4rem;
+        bottom: 15px;
+        right: 15px;
+    }
+    
+    .bottom-right-menu {
+        width: 260px;
+        right: 15px;
+        bottom: 75px;
+        padding: 1.2rem;
+    }
+    
+    .bottom-right-menu .sidebar-button {
+        padding: 12px 16px;
+        font-size: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .menu-trigger-button {
+        width: 50px;
+        height: 50px;
+        font-size: 1.3rem;
+    }
+    
+    .bottom-right-menu {
+        width: 240px;
+        right: 10px;
+        bottom: 70px;
+        padding: 1rem;
+    }
+    
+    .bottom-right-menu .sidebar-button {
+        padding: 10px 14px;
+        font-size: 0.95rem;
+    }
+    
+    .bottom-right-menu .user-info-mini {
+        gap: 0.6rem;
+    }
+    
+    .bottom-right-menu .avatar-small-wrapper {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .bottom-right-menu .lobby-username-text {
+        font-size: 1rem;
+    }
+}
+
+/* Анимация пульсации для кнопки меню */
+@keyframes pulse-glow {
+    0% {
+        box-shadow: 0 0 0 0 rgba(var(--accent-rgb), 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(var(--accent-rgb), 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(var(--accent-rgb), 0);
+    }
+}
+
+.menu-trigger-button.pulse {
+    animation: pulse-glow 2s infinite;
+}
+
+/* Темная тема специфичные настройки */
+.dark-theme .bottom-right-menu {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+}
+
+.dark-theme .bottom-right-menu .sidebar-button {
+    background: var(--bg-tertiary);
+}
+
+.dark-theme .bottom-right-menu .sidebar-button:hover {
+    background: var(--bg-hover);
+}
+
+.dark-theme .bottom-right-menu .status-button {
+    background: var(--bg-tertiary);
+}
+/* Стили для лобби аккаунта в левом нижнем углу */
+.sidebar-footer {
+    margin-top: auto;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+}
+
+.account-lobby {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    align-items: center;
+}
+
+.user-info-mini {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    width: 100%;
+    justify-content: center;
+}
+
+.avatar-small-wrapper {
+    position: relative;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.avatar-preview-image-small,
+.default-avatar-preview-small {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: white;
+    background-color: var(--accent);
+}
+
+.status-indicator {
+    position: absolute;
+    bottom: 0px;
+    right: 0px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid var(--bg-secondary);
+    background-color: var(--text-secondary);
+}
+
+.status-indicator.online {
+    background-color: var(--success);
+}
+
+.status-indicator.busy {
+    background-color: var(--danger);
+}
+
+.status-indicator.away {
+    background-color: var(--accent);
+}
+
+.lobby-username-text {
+    color: var(--text-primary);
+    font-weight: 500;
+    font-size: 1.05rem;
+}
+
+.status-button {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    border: none;
+    padding: 10px 15px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.status-button:hover {
+    background: var(--bg-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px var(--shadow);
+}
+
+.status-button i {
+    font-size: 0.8rem;
+}

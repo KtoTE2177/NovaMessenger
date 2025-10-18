@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nova Messenger</title>
+    <link rel="stylesheet" href="style.css" onerror="this.href='data:text/css;base64,' + btoa('body{background:red!important}')">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💬</text></svg>">
+</head>
+<body class="light-theme">
+    <!-- Контейнер авторизации -->
+    <div id="auth-container">
+        <div class="auth-form">
+            <div class="app-logo">
+                <span class="logo-icon">💬</span>
+                <h1>Nova</h1>
+            </div>
+            
+            <div id="login-form">
+                <div class="input-group">
+                    <input type="text" id="login-username" placeholder=" " required>
+                    <label for="login-username">Логин</label>
+                </div>
+                
+                <div class="input-group">
+                    <input type="password" id="login-password" placeholder=" " required>
+                    <label for="login-password">Пароль</label>
+                </div>
+                
+                <button class="auth-button" onclick="login()">
+                    <span class="button-icon">🚀</span>
+                    Войти
+                </button>
+                
+                <p class="auth-switch">
+                    Нет аккаунта? <a href="#" onclick="showRegister()">Зарегистрироваться</a>
+                </p>
+            </div>
+
+            <div id="register-form" style="display: none;">
+                <div class="input-group">
+                    <input type="text" id="register-username" placeholder=" " required>
+                    <label for="register-username">Логин</label>
+                </div>
+                
+                <div class="input-group">
+                    <input type="password" id="register-password" placeholder=" " required>
+                    <label for="register-password">Пароль</label>
+                </div>
+                
+                <button class="auth-button" onclick="register()">
+                    <span class="button-icon">🌟</span>
+                    Зарегистрироваться
+                </button>
+                
+                <p class="auth-switch">
+                    Уже есть аккаунт? <a href="#" onclick="showLogin()">Войти</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Основное приложение -->
+    <div id="app-container" style="display: none;">
+        <!-- Сайдбар -->
+        <div id="sidebar" class="sidebar">
+            <div class="sidebar-header">
+                <span class="sidebar-logo-icon">💬</span>
+                <h3>Чаты</h3>
+            </div>
+            
+            <div class="user-search-section">
+                <input type="text" id="user-search-input" placeholder="Найти пользователя..." oninput="searchUsers()">
+                <ul id="search-results-list" class="search-results-list">
+                    <!-- Результаты поиска будут здесь -->
+                </ul>
+            </div>
+            
+            <ul class="chat-list">
+                <li id="general-chat-tab" class="chat-list-item active" onclick="switchChat('general')">
+                    <i class="fas fa-comments"></i> Общий чат
+                </li>
+                <li id="favorites-chat-tab" class="chat-list-item" onclick="switchChat('favorites')">
+                    <i class="fas fa-star"></i> Избранное - <span id="favorites-username"></span>
+                </li>
+            </ul>
+            
+            <!-- Всплывающее меню теперь интегрировано в сайдбар -->
+            <!-- В сайдбаре, после chat-list -->
+<div class="sidebar-menu">
+    <div class="account-lobby">
+        <div class="user-info-mini">
+            <div class="avatar-small-wrapper">
+                <img id="lobby-avatar-preview" src="" alt="Аватар" class="avatar-preview-image-small hidden">
+                <div id="lobby-default-avatar-preview" class="default-avatar-preview-small"></div>
+                <span id="lobby-status-indicator" class="status-indicator online"></span>
+            </div>
+            <span id="lobby-username" class="lobby-username-text">Username</span>
+        </div>
+        <button id="status-toggle-button" class="status-button" onclick="toggleUserStatus()">
+            <i class="fas fa-circle"></i> <span id="current-status-text">В сети</span>
+        </button>
+    </div>
+    
+				    <div class="menu-buttons">
+        <button class="menu-btn" onclick="toggleTheme()">
+            <i class="fas fa-moon theme-icon"></i> Сменить тему
+        </button>
+        <button class="menu-btn" onclick="showSettings()">
+            <i class="fas fa-cog"></i> Настройки
+        </button>
+        <button class="menu-btn logout-button" onclick="logout()">
+            <i class="fas fa-sign-out-alt"></i> Выйти
+        </button>
+    </div>
+</div>
+        </div>
+        
+        <div id="main-content" class="main-content">
+            <!-- Шапка -->
+            <div class="header">
+                <div class="header-title">
+                    <span class="header-icon">💬</span>
+                    <h2 id="current-chat-title">Общий чат</h2>
+                </div>
+                
+                <div class="header-actions">
+                    <!-- Кнопки перенесены в сайдбар, здесь пусто -->
+                </div>
+            </div>
+            
+            <!-- Контейнер чата -->
+            <div class="chat-container">
+                <div id="messages" class="messages">
+                    <div class="welcome-message">
+                        <div class="welcome-icon">👋</div>
+                        <h3>Добро пожаловать в чат!</h3>
+                        <p>Начните общение, отправив первое сообщение</p>
+                    </div>
+                </div>
+                
+                <!-- Окно предпросмотра ответа -->
+                <div id="reply-preview-container" class="reply-preview-container hidden">
+                    <div class="reply-info">
+                        <span class="reply-label">Ответ на:</span>
+                        <span id="reply-username" class="reply-username"></span>
+                        <p id="reply-text" class="reply-text"></p>
+                    </div>
+                    <button id="clear-reply-button" class="clear-reply-button" title="Отменить ответ" type="button">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <!-- Поле ввода сообщения -->
+                <div class="message-input">
+                    <div class="message-input-container">
+                        <button class="emoji-button" onclick="toggleEmojiPicker()" title="Эмодзи" type="button">
+                            <i class="fas fa-grin"></i>
+                        </button>
+                        <div class="input-wrapper">
+                            <input type="text" id="message-input" placeholder="Напишите сообщение..." onkeypress="handleKeyPress(event)">
+                            <div class="input-border"></div>
+                        </div>
+                        <button class="send-button" onclick="sendMessage()" title="Отправить сообщение" type="button">
+                            <span class="send-text">Отправить</span>
+                            <span class="send-icon"><i class="fas fa-paper-plane"></i></span>
+                        </button>
+                    </div>
+                    
+                    <!-- Picker эмодзи -->
+                    <div id="emoji-picker" class="emoji-picker hidden">
+                        <div class="emoji-picker-header">
+                            <h4>Выберите эмодзи</h4>
+                            <button class="emoji-close" onclick="hideEmojiPicker()" type="button">×</button>
+                        </div>
+                        <div class="emoji-grid" id="emoji-grid">
+                            <!-- Эмодзи будут добавлены через JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Модальное окно настроек -->
+        <!-- Модальное окно настроек -->
+<div id="settings-modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-cog"></i> Настройки</h3>
+            <button class="modal-close" onclick="hideSettings()" title="Закрыть" type="button">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <div class="tab-navigation">
+            <button class="tab-button active" onclick="showSettingsTab('messenger')" type="button">Мессенджер</button>
+            <button class="tab-button" onclick="showSettingsTab('profile')" type="button">Профиль</button>
+        </div>
+
+        <!-- ОБЛАСТЬ С ПРОКРУТКОЙ -->
+        <div class="modal-body-scroll-area">
+            <div class="tab-content active" id="messenger-tab-content">
+                <div class="settings-section">
+                    <h4>Внешний вид</h4>
+                    <div class="settings-option">
+                        <label for="theme-select">Цветовая тема:</label>
+                        <select id="theme-select" onchange="changeTheme()">
+                            <option value="light">🌞 Светлая</option>
+                            <option value="dark">🌙 Тёмная</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-content" id="profile-tab-content">
+                <div class="settings-section">
+                    <h4><i class="fas fa-user-cog"></i> Аккаунт</h4>
+                    <div class="user-info">
+                        <span class="user-icon"><i class="fas fa-user-circle"></i></span>
+                        <span id="current-username">Пользователь</span>
+                    </div>
+                    
+                    <!-- СЕКЦИЯ АВАТАРА -->
+                    <div class="settings-option avatar-upload-section">
+                        <label>Ваш аватар:</label>
+                        <div class="avatar-preview-container">
+                            <img id="avatar-preview" src="" alt="Аватар" class="avatar-preview-image hidden">
+                            <div id="default-avatar-preview" class="default-avatar-preview"></div>
+                        </div>
+                        <input type="file" id="avatar-input" accept="image/*" onchange="handleAvatarChange(event)">
+                        <button class="sidebar-button menu-btn" onclick="saveAvatar()" type="button">
+                            <i class="fas fa-save"></i> Сохранить аватар
+                        </button>
+                    </div>
+                    
+                    <!-- СЕКЦИЯ "О СЕБЕ" -->
+                    <div class="settings-option">
+                        <label for="about-me-input">О себе:</label>
+                        <textarea id="about-me-input" placeholder="Расскажите о себе..."></textarea>
+                        <button class="sidebar-button menu-btn" onclick="saveProfileDescription()" type="button">
+                            <i class="fas fa-save"></i> Сохранить описание
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- СЕКЦИЯ "О ПРИЛОЖЕНИИ" -->
+            <div class="settings-section">
+                <h4>О приложении</h4>
+                <p class="app-version">Nova Messenger Alpha</p>
+                <p class="app-description">Альфа версия нового мессенджера</p>
+            </div>
+        </div>
+        
+        <div class="modal-footer">
+            <button class="close-button" onclick="hideSettings()" type="button">
+                <span class="button-icon"><i class="fas fa-check"></i></span>
+                Закрыть
+            </button>
+        </div>
+    </div>
+</div>
+
+        <!-- Модальное окно профиля пользователя -->
+        <div id="profile-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 id="profile-modal-username">Профиль пользователя</h3>
+                    <button class="modal-close" onclick="hideProfileModal()" title="Закрыть" type="button"><i class="fas fa-times"></i></button>
+                </div>
+                <div class="modal-body-scroll-area">
+                    <div class="profile-info-section">
+                        <div class="avatar-preview-container profile-avatar-large">
+                            <img id="profile-modal-avatar" src="" alt="Аватар" class="avatar-preview-image">
+                            <div id="profile-modal-default-avatar" class="default-avatar-preview"></div>
+                        </div>
+                        <p id="profile-modal-about-me" class="about-me-text">Описание отсутствует.</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="close-button" onclick="hideProfileModal()" type="button">
+                        <span class="button-icon"><i class="fas fa-check"></i></span>
+                        Закрыть
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Модальное окно предпросмотра изображения -->
+        <div id="image-preview-modal" class="modal">
+            <div class="modal-content">
+                <img id="image-preview-src" src="" alt="Предпросмотр изображения" class="modal-image-preview">
+            </div>
+        </div>
+        
+        <!-- Уведомления -->
+        <div id="notification" class="notification hidden">
+            <span id="notification-text"></span>
+        </div>
+        
+        <!-- Контекстное меню -->
+        <div id="context-menu" class="context-menu hidden">
+            <div class="context-menu-item" onclick="replyToMessage()">
+                <i class="fas fa-reply"></i> Ответить
+            </div>
+            <div class="context-menu-item" onclick="addToFavorites()">
+                <i class="fas fa-star"></i> В избранное
+            </div>
+            <div class="context-menu-item edit-option" onclick="editMessage()">
+                <i class="fas fa-edit"></i> Изменить
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

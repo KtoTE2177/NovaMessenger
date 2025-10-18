@@ -9,6 +9,7 @@ import jwt
 import hashlib
 import threading
 from typing import Dict, Any, Set
+import os
 
 SECRET_KEY = "super-secret-key-for-modern-messenger-2025"
 
@@ -1037,7 +1038,7 @@ async def websocket_handler(websocket, path):
 
 def run_http_server():
     """Запуск HTTP сервера"""
-    server = HTTPServer(('0.0.0.0', 8000), HTTPHandler)
+    server = HTTPServer(('0.0.0.0', int(os.environ.get('PORT', 8000))), HTTPHandler)
     print("HTTP сервер запущен на http://0.0.0.0:8000")
     print("Доступно по адресу: http://ваш-ip-адрес:8000")
     
@@ -1049,7 +1050,7 @@ def run_http_server():
 async def run_websocket_server():
     """Запуск WebSocket сервера"""
     try:
-        async with websockets.serve(websocket_handler, "0.0.0.0", 9001, max_size=None) as server: # Изменили порт на 9001
+        async with websockets.serve(websocket_handler, "0.0.0.0", int(os.environ.get('PORT', 9001)), max_size=None) as server:
             print("WebSocket сервер запущен на ws://0.0.0.0:9001")
             print("WebSocket сервер готов принимать соединения")
             await asyncio.Future()  # run forever
