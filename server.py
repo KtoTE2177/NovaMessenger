@@ -1049,19 +1049,6 @@ def run_http_server():
     except KeyboardInterrupt:
         server.shutdown()
 
-async def run_websocket_server():
-    """Запуск WebSocket сервера"""
-    
-    try:
-        port = int(os.environ.get("PORT", 9001))
-        async with websockets.serve(websocket_handler, "0.0.0.0", port, max_size=None) as server:
-            print("WebSocket сервер запущен на ws://0.0.0.0:9001")
-            print("WebSocket сервер готов принимать соединения")
-            await asyncio.Future()  # run forever
-    except Exception as e:
-        print(f"Ошибка запуска WebSocket сервера: {e}")
-        import traceback
-        traceback.print_exc()
 
 async def main():
     """Основная функция запуска серверов"""
@@ -1080,3 +1067,4 @@ if __name__ == '__main__':
         asyncio.run(main())
     except KeyboardInterrupt:
         print("Сервер остановлен") 
+
