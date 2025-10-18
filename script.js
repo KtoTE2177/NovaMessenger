@@ -167,7 +167,7 @@ function updateLobbyUI() {
 
 // Инициализация при загрузке страницы
 function init() {
-    checkAuth();
+    checkAuthStatus();
     loadTheme();
     setupEventListeners();
     setupSettingsScroll();
@@ -1675,7 +1675,28 @@ function scrollToMessageAndHighlight(messageId) {
         }, 2000);
     }
 }
-
+// Добавьте эту функцию в конец script.js
+function checkAuthStatus() {
+    const token = localStorage.getItem('token');
+    const user = localStorage.getItem('user');
+    
+    if (token && user) {
+        try {
+            currentUser = JSON.parse(user);
+            console.log('✅ User is logged in:', currentUser.username);
+            showApp();
+            return true;
+        } catch (e) {
+            console.error('Error parsing user data:', e);
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+        }
+    }
+    
+    console.log('❌ User is not logged in');
+    showAuth();
+    return false;
+}
 function toggleFavorite(messageId) {
     if (!messageId) return;
     
@@ -1790,4 +1811,5 @@ window.displayAvatarPreview = displayAvatarPreview;
 window.handleAvatarChange = handleAvatarChange;
 window.updateLobbyUI = updateLobbyUI;
 window.toggleUserStatus = toggleUserStatus;
+
 
