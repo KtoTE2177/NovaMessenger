@@ -1038,6 +1038,8 @@ async def websocket_handler(websocket, path):
 
 def run_http_server():
     """Запуск HTTP сервера"""
+    port = int(os.environ.get("PORT", 8000))
+    server = HTTPServer(('0.0.0.0', port), HTTPHandler)
     server = HTTPServer(('0.0.0.0', int(os.environ.get('PORT', 8000))), HTTPHandler)
     print("HTTP сервер запущен на http://0.0.0.0:8000")
     print("Доступно по адресу: http://ваш-ip-адрес:8000")
@@ -1049,8 +1051,10 @@ def run_http_server():
 
 async def run_websocket_server():
     """Запуск WebSocket сервера"""
+    
     try:
-        async with websockets.serve(websocket_handler, "0.0.0.0", int(os.environ.get('PORT', 9001)), max_size=None) as server:
+        port = int(os.environ.get("PORT", 9001))
+        async with websockets.serve(websocket_handler, "0.0.0.0", port, max_size=None) as server:
             print("WebSocket сервер запущен на ws://0.0.0.0:9001")
             print("WebSocket сервер готов принимать соединения")
             await asyncio.Future()  # run forever
