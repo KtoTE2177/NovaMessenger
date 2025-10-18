@@ -1,6 +1,5 @@
-// Конфигурация сервера
-const SERVER_IP = '192.168.0.118';
-const API_BASE = `http://${SERVER_IP}:8000`;
+// Конфигурация сервера - тот же домен
+const API_BASE = 'https://novamessenger.onrender.com/api';
 
 let currentUser = null;
 let isConnected = true;
@@ -1817,3 +1816,4 @@ window.toggleUserStatus = toggleUserStatus;
 window.updateLobbyUI = updateLobbyUI;
 window.testLoadMessages = testLoadMessages;
 window.testAllUsers = testAllUsers;
+
