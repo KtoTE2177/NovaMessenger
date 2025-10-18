@@ -1527,6 +1527,7 @@ function displaySearchResults(users) {
     }
     
     searchResultsList.style.display = 'block';
+}
 // Запуск приватного чата
 function startPrivateChat(username) {
     console.log('Starting private chat with:', username);
@@ -2006,3 +2007,4 @@ window.handleAvatarChange = handleAvatarChange;
 window.updateLobbyUI = updateLobbyUI;
 window.toggleUserStatus = toggleUserStatus;
 window.updateLobbyUI = updateLobbyUI;
+
