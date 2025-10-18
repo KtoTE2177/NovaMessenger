@@ -1,11 +1,11 @@
 // Конфигурация сервера - ЗАМЕНИТЕ НА ВАШ РЕАЛЬНЫЙ IP АДРЕС
 const SERVER_IP = '192.168.0.118';
 const API_BASE = `http://${SERVER_IP}:8000`;
-const WS_URL = `ws://${SERVER_IP}:9001`;
+// WebSocket отключен, так как приложение работает без него
+const WS_URL = '';
 
 let currentUser = null;
-let socket = null;
-let isConnected = false;
+let isConnected = true; // Всегда подключены через REST
 let emojiPickerVisible = false;
 let messageCount = 0;
 let contextMenuVisible = false;
@@ -168,8 +168,16 @@ function updateLobbyUI() {
         statusToggleButton.innerHTML = '<i class="fas fa-circle" style="color: var(--text-secondary)"></i> <span id="current-status-text">Не в сети</span>';
     }
 }
-
-// Вызовите эту функцию в init() или после успешного входа
+// Функция для периодического обновления сообщений
+function startMessagePolling() {
+    setInterval(() => {
+        if (currentUser && !currentPrivateChatUser && !isFavoritesView) {
+            console.log('Auto-refreshing messages...');
+            loadMessages(false);
+        }
+    }, 5000); // Обновлять каждые 5 секунд
+}
+// Инициализация при загрузке страницы
 function init() {
     checkAuth();
     loadTheme();
@@ -177,13 +185,12 @@ function init() {
     setupSettingsScroll();
     if (currentUser) {
         displayAvatarPreview(currentUser.avatar);
-        startMessagePolling(); // ЗАПУСТИТЬ ОБНОВЛЕНИЕ
+        startMessagePolling(); // Запускаем обновление сообщений
     }
     updateLobbyUI();
     console.log('Modern Messenger initialized');
     console.log('Server URL:', API_BASE);
 }
-
 // Настройка обработчиков событий
 function setupEventListeners() {
     document.getElementById('login-username').addEventListener('keypress', function(e) {
@@ -226,6 +233,53 @@ function setupEventListeners() {
             }
         });
     }
+
+    document.getElementById('messages').addEventListener('contextmenu', function(event) {
+        const messageElement = event.target.closest('.message');
+        if (messageElement) {
+            event.preventDefault();
+            currentMessageElement = messageElement;
+            showContextMenu(event.clientX, event.clientY, messageElement);
+        }
+    });
+
+    document.getElementById('clear-reply-button').addEventListener('click', clearReplyState);
+
+    document.getElementById('reply-preview-container').addEventListener('click', function() {
+        if (replyToMessageId) {
+            scrollToMessageAndHighlight(replyToMessageId);
+        }
+    });
+
+    document.addEventListener('click', function(event) {
+        const contextMenu = document.getElementById('context-menu');
+        if (contextMenu && !contextMenu.contains(event.target) && contextMenuVisible) {
+            hideContextMenu();
+        }
+    });
+
+    const userSearchInput = document.getElementById('user-search-input');
+    if (userSearchInput) {
+        userSearchInput.addEventListener('focus', function() {
+            if (contextMenuVisible) {
+                hideContextMenu();
+            }
+        });
+        
+        document.addEventListener('click', function(event) {
+            const searchResultsList = document.getElementById('search-results-list');
+            if (searchResultsList && !searchResultsList.contains(event.target) && !userSearchInput.contains(event.target)) {
+                searchResultsList.style.display = 'none';
+            }
+        });
+    }
+    
+    // Добавляем обработчик для кнопки смены статуса
+    const statusToggleButton = document.getElementById('status-toggle-button');
+    if (statusToggleButton) {
+        statusToggleButton.addEventListener('click', toggleUserStatus);
+    }
+}
 
     document.getElementById('messages').addEventListener('contextmenu', function(event) {
         const messageElement = event.target.closest('.message');
@@ -341,7 +395,7 @@ function checkAuth() {
         try {
             currentUser = JSON.parse(user);
             showApp();
-            connectWebSocket();
+            // WebSocket отключен
         } catch (error) {
             console.error('Error parsing user data:', error);
             logout();
@@ -373,10 +427,21 @@ function showApp() {
         displayAvatarPreview(currentUser.avatar);
     }
     
-    // ЗАГРУЗИТЬ СООБЩЕНИЯ ПРИ ПОКАЗЕ ПРИЛОЖЕНИЯ
+    switchChat('general');
+    
     setTimeout(() => {
+        const messagesContainer = document.getElementById('messages');
+        const messageInput = document.getElementById('message-input');
+        
+        if (messagesContainer) {
+            messagesContainer.style.display = 'block';
+        }
+        if (messageInput) {
+            messageInput.style.display = 'block';
+        }
+        
+        // WebSocket отключен, загружаем сообщения через REST
         loadMessages();
-        switchChat('general');
     }, 100);
 }
 
@@ -549,15 +614,6 @@ function logout() {
     updateLobbyUI();
     }
 
-
-// WebSocket соединение
-function connectWebSocket() {
-    const token = localStorage.getItem('token');
-    if (!token) {
-        console.error('No token for WebSocket connection');
-        showNotification('Ошибка авторизации', 'error');
-        return;
-    }
     
     try {
         console.log('connectWebSocket: Attempting to connect to:', `${WS_URL}/?token=${encodeURIComponent(token)}`);
@@ -633,6 +689,7 @@ function connectWebSocket() {
 }
 
 // Отправка сообщения
+// Отправка сообщения
 async function sendMessage() {
     const input = document.getElementById('message-input');
     const text = input.value.trim();
@@ -658,71 +715,48 @@ async function sendMessage() {
 
     if (input) input.value = '';
     
-    if (!socket || socket.readyState !== WebSocket.OPEN) {
-        showNotification('Нет соединения с сервером', 'error');
-        return;
-    }
-    
     try {
-        let message;
-        const tempMessageId = `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-        
+        const token = localStorage.getItem('token');
+        if (!token) {
+            showNotification('Ошибка авторизации', 'error');
+            return;
+        }
+
+        let messageData = {
+            text: text,
+            replyToId: currentReplyToMessageId
+        };
+
+        // Для приватных сообщений
         if (currentPrivateChatUser) {
-            message = {
-                type: 'private_message',
-                id: tempMessageId,
-                text: text,
-                username: currentUser.username,
-                receiver: currentPrivateChatUser,
-                timestamp: new Date().toISOString(),
-                replyToId: currentReplyToMessageId,
-                avatar: currentUser.avatar
-            };
-            const token = localStorage.getItem('token');
-            const response = await fetch(`${API_BASE}/private-message`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify(message)
-            });
-            const data = await response.json();
-            if (data.success && data.message) {
-                const serverMessageId = data.message.id;
-                const serverTimestamp = data.message.timestamp;
+            messageData.receiver = currentPrivateChatUser;
+        }
 
-                const tempMessageElement = document.querySelector(`[data-message-id="${tempMessageId}"]`);
-                if (tempMessageElement) {
-                    tempMessageElement.dataset.messageId = serverMessageId;
-                    const smallElement = tempMessageElement.querySelector('small');
-                    if (smallElement) {
-                        smallElement.textContent = new Date(serverTimestamp).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
-                    }
-                }
+        const endpoint = currentPrivateChatUser ? '/private-message' : '/messages';
+        
+        const response = await fetch(`${API_BASE}${endpoint}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(messageData)
+        });
 
-                const cachedMessages = privateChats[currentPrivateChatUser];
-                const index = cachedMessages.findIndex(msg => msg.id === tempMessageId);
-                if (index !== -1) {
-                    cachedMessages[index].id = serverMessageId;
-                    cachedMessages[index].timestamp = serverTimestamp;
-                }
-                showNotification('Личное сообщение отправлено ✅');
-            } else {
-                showNotification('Ошибка отправки личного сообщения: ' + data.message, 'error');
-            }
-        } else {
-            message = {
-                type: 'message',
-                id: tempMessageId,
-                text: text,
-                username: currentUser.username,
-                timestamp: new Date().toISOString(),
-                replyToId: currentReplyToMessageId,
-                avatar: currentUser.avatar
-            };
-            socket.send(JSON.stringify(message));
+        const data = await response.json();
+        
+        if (data.success) {
             showNotification('Сообщение отправлено ✅');
+            // Перезагружаем сообщения чтобы увидеть новое
+            setTimeout(() => {
+                if (currentPrivateChatUser) {
+                    loadPrivateChatMessages(currentPrivateChatUser);
+                } else {
+                    loadMessages();
+                }
+            }, 500);
+        } else {
+            showNotification('Ошибка отправки сообщения: ' + data.message, 'error');
         }
         
         clearReplyState();
@@ -1325,12 +1359,40 @@ function insertEmoji(emoji) {
         }, 200);
     }
 }
+// Функция для тестирования загрузки сообщений
+function testLoadMessages() {
+    console.log('=== ТЕСТ ЗАГРУЗКИ СООБЩЕНИЙ ===');
+    console.log('currentUser:', currentUser);
+    console.log('token:', localStorage.getItem('token'));
+    console.log('API_BASE:', API_BASE);
+    
+    loadMessages();
+}
 
-// Проверка соединения
+// Функция для проверки всех пользователей
+async function testAllUsers() {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`${API_BASE}/users`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (response.ok) {
+            const users = await response.json();
+            console.log('Все пользователи:', users);
+            showNotification(`Найдено пользователей: ${users.length}`);
+        } else {
+            console.error('Ошибка загрузки пользователей:', response.status);
+        }
+    } catch (error) {
+        console.error('Ошибка:', error);
+    }
+}
+// Проверка соединения (упрощенная версия)
 function checkConnection() {
-    if (!isConnected && currentUser) {
-        showNotification('Нет соединения. Переподключение...', 'error');
-        connectWebSocket();
+    // Всегда подключены через REST
+    if (!currentUser) {
+        showNotification('Нет авторизации', 'error');
     }
 }
 
@@ -2032,6 +2094,7 @@ window.handleAvatarChange = handleAvatarChange;
 window.updateLobbyUI = updateLobbyUI;
 window.toggleUserStatus = toggleUserStatus;
 window.updateLobbyUI = updateLobbyUI;
+
 
 
 
