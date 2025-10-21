@@ -168,6 +168,7 @@ function updateLobbyUI() {
 
 // Инициализация при загрузке страницы
 function init() {
+	checkServerStatus();
     checkAuth();
     loadTheme();
     setupEventListeners();
@@ -1603,6 +1604,36 @@ function fileToBase64(file) {
     });
 }
 
+async function checkServerStatus() {
+    try {
+        console.log('Testing server connection to:', API_BASE);
+        
+        // Проверяем базовый URL
+        const response = await fetch(API_BASE.replace('/api', ''));
+        console.log('Server root status:', response.status);
+        
+        // Проверяем API endpoints
+        const endpoints = ['/login', '/register', '/messages'];
+        for (const endpoint of endpoints) {
+            try {
+                const testResponse = await fetch(API_BASE + endpoint, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                console.log(`Endpoint ${endpoint}:`, testResponse.status);
+            } catch (err) {
+                console.log(`Endpoint ${endpoint}: ERROR -`, err.message);
+            }
+        }
+    } catch (error) {
+        console.error('Server status check failed:', error);
+    }
+}
+
+
+
 // Функция для загрузки данных профиля при открытии настроек
 function loadProfileData() {
     if (!currentUser) return;
@@ -1816,4 +1847,3 @@ window.toggleUserStatus = toggleUserStatus;
 window.updateLobbyUI = updateLobbyUI;
 window.testLoadMessages = testLoadMessages;
 window.testAllUsers = testAllUsers;
-
