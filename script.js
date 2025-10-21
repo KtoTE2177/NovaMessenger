@@ -38,6 +38,21 @@ function getAvatarColor(username) {
     const index = Math.abs(hash % colors.length);
     return colors[index];
 }
+// Конфигурация сервера - тот же домен
+const API_BASE = 'https://novamessenger.onrender.com/api';
+
+// Добавьте эту функцию для проверки ответа сервера
+async function handleApiResponse(response, endpoint) {
+    const contentType = response.headers.get('content-type');
+    
+    if (!contentType || !contentType.includes('application/json')) {
+        const text = await response.text();
+        console.error(`Server returned non-JSON response for ${endpoint}:`, text.substring(0, 200));
+        throw new Error(`Server error: Received HTML instead of JSON. Status: ${response.status}`);
+    }
+    
+    return response.json();
+}
 
 // Функция для отображения превью аватара
 function displayAvatarPreview(avatarUrl) {
@@ -390,7 +405,7 @@ function showRegister() {
     document.getElementById('login-password').value = '';
 }
 
-// Авторизация
+// Обновите функцию login
 async function login() {
     const username = document.getElementById('login-username').value.trim();
     const password = document.getElementById('login-password').value;
@@ -402,6 +417,9 @@ async function login() {
 
     try {
         showLoading(true, 'login');
+        
+        console.log('Sending login request to:', `${API_BASE}/login`);
+        
         const response = await fetch(`${API_BASE}/login`, {
             method: 'POST',
             headers: { 
@@ -410,15 +428,16 @@ async function login() {
             body: JSON.stringify({ username, password })
         });
 
-        const data = await response.json();
+        console.log('Login response status:', response.status);
+        
+        // Используем новую функцию для обработки ответа
+        const data = await handleApiResponse(response, '/login');
         
         if (data.success) {
             localStorage.setItem('token', data.token);
             let userData = data.user;
 
             console.log("Login successful. Received user data:", userData);
-            console.log("Login successful. Username from data:", userData.username);
-            console.log("Login successful. AboutMe from data:", userData.aboutMe);
             
             hideSettings();
             hideProfileModal();
@@ -435,13 +454,17 @@ async function login() {
         }
     } catch (error) {
         console.error('Login error:', error);
-        showNotification('Ошибка соединения с сервером', 'error');
+        if (error.message.includes('HTML instead of JSON')) {
+            showNotification('Сервер временно недоступен. Попробуйте позже.', 'error');
+        } else {
+            showNotification('Ошибка соединения с сервером', 'error');
+        }
     } finally {
         showLoading(false, 'login');
     }
 }
 
-// Регистрация
+// Обновите функцию register
 async function register() {
     const username = document.getElementById('register-username').value.trim();
     const password = document.getElementById('register-password').value;
@@ -464,6 +487,9 @@ async function register() {
     try {
         showLoading(true, 'register');
         const defaultAvatar = generateDefaultAvatar(username);
+        
+        console.log('Sending registration request to:', `${API_BASE}/register`);
+        
         const response = await fetch(`${API_BASE}/register`, {
             method: 'POST',
             headers: { 
@@ -472,7 +498,10 @@ async function register() {
             body: JSON.stringify({ username, password, avatar: defaultAvatar, aboutMe: '' })
         });
 
-        const data = await response.json();
+        console.log('Registration response status:', response.status);
+        
+        // Используем новую функцию для обработки ответа
+        const data = await handleApiResponse(response, '/register');
         
         if (data.success) {
             showNotification('Регистрация успешна! Теперь войдите. ✅');
@@ -484,32 +513,13 @@ async function register() {
         }
     } catch (error) {
         console.error('Register error:', error);
-        showNotification('Ошибка соединения с сервером', 'error');
+        if (error.message.includes('HTML instead of JSON')) {
+            showNotification('Сервер временно недоступен. Попробуйте позже.', 'error');
+        } else {
+            showNotification('Ошибка соединения с сервером', 'error');
+        }
     } finally {
         showLoading(false, 'register');
-    }
-}
-
-// Показать/скрыть загрузку
-function showLoading(show, type) {
-    const buttons = {
-        'login': document.querySelector('#login-form button'),
-        'register': document.querySelector('#register-form button')
-    };
-    
-    const button = buttons[type];
-    if (!button) return;
-
-    if (show) {
-        button.disabled = true;
-        button.innerHTML = '<span class="loading-dots"><span></span><span></span><span></span></span>';
-    } else {
-        button.disabled = false;
-        if (type === 'login') {
-            button.innerHTML = '<span class="button-icon"><i class="fas fa-sign-in-alt"></i></span> Войти';
-        } else {
-            button.innerHTML = '<span class="button-icon"><i class="fas fa-user-plus"></i></span> Зарегистрироваться';
-        }
     }
 }
 
@@ -1604,15 +1614,16 @@ function fileToBase64(file) {
     });
 }
 
+// Обновите функцию checkServerStatus для лучшей диагностики
 async function checkServerStatus() {
     try {
         console.log('Testing server connection to:', API_BASE);
         
         // Проверяем базовый URL
-        const response = await fetch(API_BASE.replace('/api', ''));
-        console.log('Server root status:', response.status);
+        const baseResponse = await fetch(API_BASE.replace('/api', ''));
+        console.log('Server root status:', baseResponse.status);
         
-        // Проверяем API endpoints
+        // Проверяем доступность API endpoints
         const endpoints = ['/login', '/register', '/messages'];
         for (const endpoint of endpoints) {
             try {
@@ -1622,13 +1633,21 @@ async function checkServerStatus() {
                         'Content-Type': 'application/json'
                     }
                 });
-                console.log(`Endpoint ${endpoint}:`, testResponse.status);
+                
+                const contentType = testResponse.headers.get('content-type');
+                console.log(`Endpoint ${endpoint}: Status ${testResponse.status}, Content-Type: ${contentType}`);
+                
+                if (!testResponse.ok) {
+                    console.log(`Endpoint ${endpoint} returned error: ${testResponse.status}`);
+                }
+                
             } catch (err) {
                 console.log(`Endpoint ${endpoint}: ERROR -`, err.message);
             }
         }
     } catch (error) {
         console.error('Server status check failed:', error);
+        showNotification('Сервер недоступен. Проверьте подключение к интернету.', 'error');
     }
 }
 
@@ -1847,3 +1866,4 @@ window.toggleUserStatus = toggleUserStatus;
 window.updateLobbyUI = updateLobbyUI;
 window.testLoadMessages = testLoadMessages;
 window.testAllUsers = testAllUsers;
+
