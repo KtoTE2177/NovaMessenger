@@ -1,5 +1,5 @@
 // Конфигурация сервера - тот же домен
-const API_BASE = 'https://inova-messenger.onrender.com/api';
+const API_BASE = '/api'; // Используем относительный путь
 
 let currentUser = null;
 let isConnected = true;
@@ -16,7 +16,9 @@ let currentPrivateChatUser = null;
 let privateChats = {};
 let currentUserStatus = 'online';
 let bottomRightMenuVisible = false;
-
+// Мок-данные для тестирования
+let mockMessages = [];
+let mockUsers = [];
 // Базовые функции UI
 function showLogin() {
     document.getElementById('login-form').style.display = 'block';
@@ -37,7 +39,48 @@ function showAuth() {
     document.getElementById('app-container').style.display = 'none';
     currentUser = null;
 }
-
+function initializeMockData() {
+    // Очищаем предыдущие данные
+    mockMessages = [];
+    mockUsers = [];
+    
+    // Создаем тестовые сообщения
+    const sampleMessages = [
+        {
+            id: 'mock-1',
+            username: 'alice',
+            text: 'Привет всем! Добро пожаловать в iNOVA Messenger!',
+            timestamp: new Date(Date.now() - 3600000).toISOString(),
+            avatar: generateDefaultAvatar('alice'),
+            isFavorite: false
+        },
+        {
+            id: 'mock-2', 
+            username: 'bob',
+            text: 'Отличный мессенджер! Интерфейс очень понравился',
+            timestamp: new Date(Date.now() - 1800000).toISOString(),
+            avatar: generateDefaultAvatar('bob'),
+            isFavorite: true
+        },
+        {
+            id: 'mock-3',
+            username: currentUser.username,
+            text: 'Рад присоединиться к чату!',
+            timestamp: new Date(Date.now() - 600000).toISOString(),
+            avatar: currentUser.avatar,
+            isFavorite: false
+        }
+    ];
+    
+    mockMessages = sampleMessages;
+    
+    // Создаем тестовых пользователей
+    mockUsers = [
+        { username: 'alice', avatar: generateDefaultAvatar('alice'), aboutMe: 'Люблю программирование' },
+        { username: 'bob', avatar: generateDefaultAvatar('bob'), aboutMe: 'Дизайнер интерфейсов' },
+        { username: 'charlie', avatar: generateDefaultAvatar('charlie'), aboutMe: 'Разработчик игр' }
+    ];
+}
 function showApp() {
     console.log('showApp: Function called.');
     document.getElementById('auth-container').style.display = 'none';
@@ -466,51 +509,27 @@ async function login() {
     }
 
     try {
-        showLoading(true, 'login');
+        // Мок-авторизация
+        const mockUser = {
+            id: Date.now(),
+            username: username,
+            avatar: generateDefaultAvatar(username),
+            aboutMe: 'Тестовый пользователь iNOVA Messenger'
+        };
         
-        console.log('Sending login request to:', `${API_BASE}/login`);
+        localStorage.setItem('token', 'mock-token-' + Date.now());
+        localStorage.setItem('user', JSON.stringify(mockUser));
+        currentUser = mockUser;
         
-        const response = await fetch(`${API_BASE}/login`, {
-            method: 'POST',
-            headers: { 
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ username, password })
-        });
-
-        console.log('Login response status:', response.status);
+        // Инициализируем мок-данные
+        initializeMockData();
         
-        // Используем новую функцию для обработки ответа
-        const data = await handleApiResponse(response, '/login');
+        showNotification('Вход выполнен успешно! 🎉 (режим тестирования)');
+        showApp();
         
-        if (data.success) {
-            localStorage.setItem('token', data.token);
-            let userData = data.user;
-
-            console.log("Login successful. Received user data:", userData);
-            
-            hideSettings();
-            hideProfileModal();
-
-            if (!userData.avatar) {
-                userData.avatar = generateDefaultAvatar(userData.username);
-            }
-            localStorage.setItem('user', JSON.stringify(userData));
-            currentUser = userData;
-            showNotification('Вход выполнен успешно! 🎉');
-            showApp();
-        } else {
-            showNotification('Ошибка: ' + data.message, 'error');
-        }
     } catch (error) {
         console.error('Login error:', error);
-        if (error.message.includes('HTML instead of JSON')) {
-            showNotification('Сервер временно недоступен. Попробуйте позже.', 'error');
-        } else {
-            showNotification('Ошибка соединения с сервером', 'error');
-        }
-    } finally {
-        showLoading(false, 'login');
+        showNotification('Ошибка входа', 'error');
     }
 }
 
@@ -534,41 +553,12 @@ async function register() {
     }
 
     try {
-        showLoading(true, 'register');
-        const defaultAvatar = generateDefaultAvatar(username);
+        showNotification('Регистрация успешна! Теперь войдите. ✅');
+        showLogin();
         
-        console.log('Sending registration request to:', `${API_BASE}/register`);
-        
-        const response = await fetch(`${API_BASE}/register`, {
-            method: 'POST',
-            headers: { 
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ username, password, avatar: defaultAvatar, aboutMe: '' })
-        });
-
-        console.log('Registration response status:', response.status);
-        
-        // Используем новую функцию для обработки ответа
-        const data = await handleApiResponse(response, '/register');
-        
-        if (data.success) {
-            showNotification('Регистрация успешна! Теперь войдите. ✅');
-            showLogin();
-            hideSettings();
-            hideProfileModal();
-        } else {
-            showNotification('Ошибка: ' + data.message, 'error');
-        }
     } catch (error) {
         console.error('Register error:', error);
-        if (error.message.includes('HTML instead of JSON')) {
-            showNotification('Сервер временно недоступен. Попробуйте позже.', 'error');
-        } else {
-            showNotification('Ошибка соединения с сервером', 'error');
-        }
-    } finally {
-        showLoading(false, 'register');
+        showNotification('Ошибка регистрации', 'error');
     }
 }
 
@@ -595,13 +585,18 @@ async function sendMessage() {
     if (!text) {
         showNotification('Введите сообщение', 'error');
         if (input) input.focus();
-        console.log('sendMessage: Text is empty, returning early.');
         return;
     }
     
     if (editingMessageId) {
-        console.log(`sendMessage: Editing mode active. Calling sendEditMessage for ID ${editingMessageId}.`);
-        sendEditMessage(editingMessageId, text);
+        // Мок-редактирование сообщения
+        const messageIndex = mockMessages.findIndex(msg => msg.id === editingMessageId);
+        if (messageIndex !== -1) {
+            mockMessages[messageIndex].text = text;
+            mockMessages[messageIndex].editedTimestamp = new Date().toISOString();
+            updateMessageInDOM(editingMessageId, text, mockMessages[messageIndex].editedTimestamp);
+            showNotification('Сообщение изменено ✅');
+        }
         clearEditState();
         return;
     }
@@ -613,48 +608,27 @@ async function sendMessage() {
     if (input) input.value = '';
     
     try {
-        const token = localStorage.getItem('token');
-        if (!token) {
-            showNotification('Ошибка авторизации', 'error');
-            return;
-        }
-
-        let messageData = {
+        // Создаем мок-сообщение
+        const newMessage = {
+            id: 'mock-' + Date.now(),
+            username: currentUser.username,
             text: text,
-            replyToId: currentReplyToMessageId
+            timestamp: new Date().toISOString(),
+            avatar: currentUser.avatar,
+            replyToId: currentReplyToMessageId,
+            replyToUsername: currentReplyToUsername,
+            replyToText: currentReplyToText,
+            receiver: currentPrivateChatUser || null,
+            isFavorite: false
         };
 
-        // Для приватных сообщений
-        if (currentPrivateChatUser) {
-            messageData.receiver = currentPrivateChatUser;
-        }
-
-        const endpoint = currentPrivateChatUser ? '/private-message' : '/messages';
+        // Добавляем в мок-данные
+        mockMessages.push(newMessage);
         
-        const response = await fetch(`${API_BASE}${endpoint}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify(messageData)
-        });
-
-        const data = await response.json();
+        // Показываем в чате
+        addMessageToChat(newMessage, true, !!currentPrivateChatUser);
         
-        if (data.success) {
-            showNotification('Сообщение отправлено ✅');
-            // Перезагружаем сообщения чтобы увидеть новое
-            setTimeout(() => {
-                if (currentPrivateChatUser) {
-                    loadPrivateChatMessages(currentPrivateChatUser);
-                } else {
-                    loadMessages();
-                }
-            }, 500);
-        } else {
-            showNotification('Ошибка отправки сообщения: ' + data.message, 'error');
-        }
+        showNotification('Сообщение отправлено ✅ (тестовый режим)');
         
         clearReplyState();
         
@@ -725,72 +699,32 @@ function handleKeyPress(event) {
 
 // Загрузка сообщений
 async function loadMessages(onlyFavorites = false) {
-    console.log('loadMessages: Function called.', { onlyFavorites, currentPrivateChatUser });
+    console.log('loadMessages: Loading mock messages', { onlyFavorites, currentPrivateChatUser });
+    
     try {
         const messagesContainer = document.getElementById('messages');
         if (!messagesContainer) return;
 
         messagesContainer.innerHTML = '';
 
-        const token = localStorage.getItem('token');
-        if (!token) {
-            logout();
-            return;
-        }
-
         let messages = [];
         let chatTypeForDisplay = 'general';
 
         if (currentPrivateChatUser) {
             chatTypeForDisplay = 'private';
-            if (privateChats[currentPrivateChatUser]) {
-                messages = privateChats[currentPrivateChatUser];
-                console.log(`loadMessages: Loaded private messages for ${currentPrivateChatUser} from cache:`, messages);
-            } else {
-                const url = `${API_BASE}/private-messages?username=${encodeURIComponent(currentPrivateChatUser)}`;
-                const response = await fetch(url, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                if (!response.ok) {
-                    throw new Error(`Ошибка загрузки личных сообщений: ${response.status}`);
-                }
-                messages = await response.json();
-                privateChats[currentPrivateChatUser] = messages;
-                console.log(`loadMessages: Loaded private messages for ${currentPrivateChatUser} from server:`, messages);
-            }
+            // Фильтруем сообщения для приватного чата
+            messages = mockMessages.filter(msg => 
+                (msg.username === currentPrivateChatUser && msg.receiver === currentUser.username) ||
+                (msg.username === currentUser.username && msg.receiver === currentPrivateChatUser)
+            );
         } else if (onlyFavorites) {
             chatTypeForDisplay = 'favorites';
-            const url = `${API_BASE}/messages/favorites`;
-            const response = await fetch(url, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (response.status === 401) {
-                logout();
-                return;
-            }
-            if (!response.ok) {
-                throw new Error('HTTP error ' + response.status);
-            }
-            messages = await response.json();
-            console.log('loadMessages: Received favorite messages from server:', messages);
+            messages = mockMessages.filter(msg => msg.isFavorite);
         } else {
             chatTypeForDisplay = 'general';
-            const url = `${API_BASE}/messages`;
-            const response = await fetch(url, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (response.status === 401) {
-                logout();
-                return;
-            }
-            if (!response.ok) {
-                throw new Error('HTTP error ' + response.status);
-            }
-            messages = await response.json();
-            console.log('loadMessages: Received general messages from server:', messages);
+            messages = mockMessages.filter(msg => !msg.receiver); // Только общие сообщения
         }
 
-        messagesContainer.innerHTML = '';
         messageCount = messages.length;
 
         if (messages.length === 0) {
@@ -1905,6 +1839,7 @@ window.updateLobbyUI = updateLobbyUI;
 window.toggleUserStatus = toggleUserStatus;
 window.testLoadMessages = testLoadMessages;
 window.testAllUsers = testAllUsers;
+
 
 
 
