@@ -518,6 +518,8 @@ async function register() {
     const username = document.getElementById('register-username').value.trim();
     const password = document.getElementById('register-password').value;
 
+    console.log('Register attempt:', { username, password });
+
     if (!username || !password) {
         showNotification('Заполните все поля', 'error');
         return;
@@ -538,19 +540,34 @@ async function register() {
         const defaultAvatar = generateDefaultAvatar(username);
         
         console.log('Sending registration request to:', `${API_BASE}/register`);
+        console.log('Request data:', { username, password, avatar: defaultAvatar, aboutMe: '' });
         
         const response = await fetch(`${API_BASE}/register`, {
             method: 'POST',
             headers: { 
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ username, password, avatar: defaultAvatar, aboutMe: '' })
+            body: JSON.stringify({ 
+                username: username, 
+                password: password, 
+                avatar: defaultAvatar, 
+                aboutMe: '' 
+            })
         });
 
         console.log('Registration response status:', response.status);
         
-        // Используем новую функцию для обработки ответа
-        const data = await handleApiResponse(response, '/register');
+        // Получим текст ответа для диагностики
+        const responseText = await response.text();
+        console.log('Raw response:', responseText);
+        
+        let data;
+        try {
+            data = JSON.parse(responseText);
+        } catch (e) {
+            console.error('Failed to parse JSON response:', e);
+            throw new Error(`Server returned invalid JSON: ${responseText.substring(0, 100)}`);
+        }
         
         if (data.success) {
             showNotification('Регистрация успешна! Теперь войдите. ✅');
@@ -562,11 +579,7 @@ async function register() {
         }
     } catch (error) {
         console.error('Register error:', error);
-        if (error.message.includes('HTML instead of JSON')) {
-            showNotification('Сервер временно недоступен. Попробуйте позже.', 'error');
-        } else {
-            showNotification('Ошибка соединения с сервером', 'error');
-        }
+        showNotification('Ошибка регистрации: ' + error.message, 'error');
     } finally {
         showLoading(false, 'register');
     }
@@ -1902,6 +1915,7 @@ window.updateLobbyUI = updateLobbyUI;
 window.toggleUserStatus = toggleUserStatus;
 window.testLoadMessages = testLoadMessages;
 window.testAllUsers = testAllUsers;
+
 
 
 
