@@ -271,12 +271,12 @@ function init() {
     
     if (currentUser) {
         displayAvatarPreview(currentUser.avatar);
-        initializeMockData(); // Инициализируем мок-данные
+        // УДАЛИТЕ ЭТУ СТРОКУ: initializeMockData(); // Инициализируем мок-данные
         startMessagePolling();
     }
     
     updateLobbyUI();
-    console.log('Modern Messenger initialized (MOCK MODE)');
+    console.log('Modern Messenger initialized'); // Убрали "(MOCK MODE)"
 }
 
 // Настройка обработчиков событий
@@ -1915,6 +1915,7 @@ window.updateLobbyUI = updateLobbyUI;
 window.toggleUserStatus = toggleUserStatus;
 window.testLoadMessages = testLoadMessages;
 window.testAllUsers = testAllUsers;
+
 
 
 
