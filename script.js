@@ -1836,15 +1836,11 @@ window.onload = function() {
 };
 
 // Глобальные функции для HTML
-window.searchUsers = searchUsers;
-window.startPrivateChat = startPrivateChat;
-window.closePrivateChat = closePrivateChat;
-window.switchToPrivateChat = switchToPrivateChat;
+window.showRegister = showRegister;
+window.showLogin = showLogin;
 window.login = login;
 window.register = register;
 window.logout = logout;
-window.showLogin = showLogin;
-window.showRegister = showRegister;
 window.sendMessage = sendMessage;
 window.handleKeyPress = handleKeyPress;
 window.toggleTheme = toggleTheme;
@@ -1877,6 +1873,6 @@ window.displayAvatarPreview = displayAvatarPreview;
 window.handleAvatarChange = handleAvatarChange;
 window.updateLobbyUI = updateLobbyUI;
 window.toggleUserStatus = toggleUserStatus;
-window.updateLobbyUI = updateLobbyUI;
 window.testLoadMessages = testLoadMessages;
 window.testAllUsers = testAllUsers;
+
