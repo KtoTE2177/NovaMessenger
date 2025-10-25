@@ -120,18 +120,29 @@ class Database:
         self.conn.commit()
         return cursor.rowcount > 0
 
-    def get_messages(self, username: str, only_favorites: bool = False, limit: int = 100) -> list:
+    def get_messages(self, username: str = None, only_favorites: bool = False, limit: int = 100) -> list:
         cursor = self.conn.cursor()
         
-        query = """
-            SELECT 
-                m.id, m.username, m.text, m.timestamp, m.reply_to_id, m.is_favorite,
-                r.username AS reply_username, r.text AS reply_text, m.avatar
-            FROM messages m
-            LEFT JOIN messages r ON m.reply_to_id = r.id
-            WHERE m.username = ?
-        """
-        params = [username]
+        if username:
+            query = """
+                SELECT 
+                    m.id, m.username, m.text, m.timestamp, m.reply_to_id, m.is_favorite,
+                    r.username AS reply_username, r.text AS reply_text, m.avatar
+                FROM messages m
+                LEFT JOIN messages r ON m.reply_to_id = r.id
+                WHERE m.username = ?
+            """
+            params = [username]
+        else:
+            query = """
+                SELECT 
+                    m.id, m.username, m.text, m.timestamp, m.reply_to_id, m.is_favorite,
+                    r.username AS reply_username, r.text AS reply_text, m.avatar
+                FROM messages m
+                LEFT JOIN messages r ON m.reply_to_id = r.id
+                WHERE 1=1
+            """
+            params = []
         
         if only_favorites:
             query += " AND m.is_favorite = 1"
@@ -175,7 +186,7 @@ class Database:
             SELECT username, avatar, about_me FROM users 
             WHERE username LIKE ? 
             LIMIT ?
-        ''', (f'{search_term}%', limit))
+        ''', (f'%{search_term}%', limit))
         return cursor.fetchall()
 
 db = Database()
@@ -206,38 +217,43 @@ class HTTPHandler(BaseHTTPRequestHandler):
         self.end_headers()
     
     def do_GET(self):
-        print(f"do_GET: Path received: {self.path}")
+        print(f"GET request: {self.path}")
+        
+        # Статические файлы
         if self.path == '/':
             self.serve_file('index.html', 'text/html')
         elif self.path == '/style.css':
             self.serve_file('style.css', 'text/css')
         elif self.path == '/script.js':
             self.serve_file('script.js', 'application/javascript')
-        elif self.path == '/websocket_test.html':
-            self.serve_file('websocket_test.html', 'text/html')
-        elif self.path == '/messages':
+        
+        # API endpoints
+        elif self.path == '/api/messages':
             self.handle_get_messages()
-        elif self.path == '/messages/favorites':
+        elif self.path == '/api/messages/favorites':
             self.handle_get_favorite_messages()
-        elif self.path.startswith('/user/profile'):
+        elif self.path.startswith('/api/user/profile'):
             self.handle_get_user_profile()
-        elif self.path.startswith('/users/search'):
+        elif self.path.startswith('/api/users/search'):
             self.handle_search_users()
         else:
             self.send_error(404)
 
     def do_POST(self):
-        if self.path == '/register':
+        print(f"POST request: {self.path}")
+        
+        # API endpoints
+        if self.path == '/api/register':
             self.handle_register()
-        elif self.path == '/login':
+        elif self.path == '/api/login':
             self.handle_login()
-        elif self.path == '/message/favorite':
+        elif self.path == '/api/message/favorite':
             self.handle_favorite_message()
-        elif self.path == '/message/edit':
+        elif self.path == '/api/message/edit':
             self.handle_edit_message()
-        elif self.path == '/user/profile/update':
+        elif self.path == '/api/user/profile/update':
             self.handle_update_profile()
-        elif self.path == '/message/send':  # ДОБАВЛЕНО: для отправки сообщений через HTTP
+        elif self.path == '/api/messages':
             self.handle_send_message()
         else:
             self.send_error(404)
@@ -326,7 +342,12 @@ class HTTPHandler(BaseHTTPRequestHandler):
             self.wfile.write(json.dumps({
                 'success': True,
                 'token': token,
-                'user': {'username': username, 'avatar': user_data[4], 'aboutMe': user_data[5]}
+                'user': {
+                    'id': user_data[0],
+                    'username': username, 
+                    'avatar': user_data[4], 
+                    'aboutMe': user_data[5]
+                }
             }).encode())
         else:
             self.send_response(401)
@@ -337,7 +358,7 @@ class HTTPHandler(BaseHTTPRequestHandler):
                 'message': 'Неверные данные для входа'
             }).encode())
 
-    def handle_send_message(self):  # НОВЫЙ МЕТОД: отправка сообщений через HTTP
+    def handle_send_message(self):
         auth_header = self.headers.get('Authorization', '')
         if auth_header.startswith('Bearer '):
             token = auth_header[7:]
@@ -362,7 +383,6 @@ class HTTPHandler(BaseHTTPRequestHandler):
         try:
             data = json.loads(post_data)
             text = data.get('text', '').strip()
-            avatar = data.get('avatar', None)
             reply_to_id = data.get('replyToId')
         except (json.JSONDecodeError, TypeError):
             self.send_response(400)
@@ -377,6 +397,10 @@ class HTTPHandler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(json.dumps({'success': False, 'message': 'Сообщение не может быть пустым'}).encode())
             return
+
+        # Получаем аватар пользователя
+        user_data = db.get_user(username)
+        avatar = user_data[4] if user_data and user_data[4] else None
 
         message_id = db.add_message_with_avatar(username, text, avatar, reply_to_id)
         
@@ -452,7 +476,8 @@ class HTTPHandler(BaseHTTPRequestHandler):
             }).encode())
             return
         
-        messages = db.get_messages(username=username)
+        # Получаем все сообщения (общий чат)
+        messages = db.get_messages()
         formatted_messages = [
             {
                 'id': msg[0],
@@ -547,7 +572,10 @@ class HTTPHandler(BaseHTTPRequestHandler):
             self.wfile.write(json.dumps({'success': False, 'message': 'Пользователь не найден'}).encode())
 
     def handle_search_users(self):
-        search_term = parse_qs(urlparse(self.path).query).get('username', [''])[0]
+        parsed_path = urlparse(self.path)
+        query_params = parse_qs(parsed_path.query)
+        search_term = query_params.get('q', [''])[0]
+        
         if not search_term:
             self.send_response(400)
             self._set_cors_headers()
@@ -664,6 +692,7 @@ class HTTPHandler(BaseHTTPRequestHandler):
             user_data = db.get_user(username)
             if user_data:
                 updated_user = {
+                    'id': user_data[0],
                     'username': user_data[1],
                     'avatar': user_data[4],
                     'aboutMe': user_data[5]
@@ -700,6 +729,17 @@ def run_http_server():
     server = HTTPServer(('0.0.0.0', port), HTTPHandler)
     print(f"HTTP сервер запущен на порту {port}")
     print("Мессенджер готов к работе!")
+    print("Доступные API endpoints:")
+    print("  POST /api/register")
+    print("  POST /api/login") 
+    print("  GET  /api/messages")
+    print("  POST /api/messages")
+    print("  GET  /api/messages/favorites")
+    print("  POST /api/message/favorite")
+    print("  POST /api/message/edit")
+    print("  POST /api/user/profile/update")
+    print("  GET  /api/users/search")
+    print("  GET  /api/user/profile")
     
     try:
         server.serve_forever()
@@ -712,4 +752,3 @@ if __name__ == '__main__':
     print("Запуск HTTP мессенджера...")
     print("=" * 50)
     run_http_server()
-
