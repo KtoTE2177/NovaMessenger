@@ -69,7 +69,37 @@ function showApp() {
         loadMessages();
     }, 100);
 }
+async function checkAvailableEndpoints() {
+    const baseUrl = 'https://inova-messenger.onrender.com';
+    const endpoints = [
+        '/api/login',
+        '/api/register',
+        '/api/messages',
+        '/api/users',
+        '/login',
+        '/register',
+        '/messages',
+        '/'
+    ];
+    
+    console.log('=== CHECKING AVAILABLE ENDPOINTS ===');
+    
+    for (const endpoint of endpoints) {
+        try {
+            const response = await fetch(baseUrl + endpoint, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            console.log(`✅ ${endpoint}: ${response.status}`);
+        } catch (error) {
+            console.log(`❌ ${endpoint}: ${error.message}`);
+        }
+    }
+}
 
+// Вызовите в консоли браузера: checkAvailableEndpoints()
 // Функция для генерации дефолтного аватара (SVG)
 function generateDefaultAvatar(username) {
     if (!username) return '';
@@ -1875,5 +1905,6 @@ window.updateLobbyUI = updateLobbyUI;
 window.toggleUserStatus = toggleUserStatus;
 window.testLoadMessages = testLoadMessages;
 window.testAllUsers = testAllUsers;
+
 
 
