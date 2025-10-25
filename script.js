@@ -1,5 +1,5 @@
 // Конфигурация сервера - тот же домен
-const API_BASE = 'https://novamessenger.onrender.com/api';
+const API_BASE = 'https://inova-messenger.onrender.com/api';
 
 let currentUser = null;
 let isConnected = true;
@@ -1875,4 +1875,5 @@ window.updateLobbyUI = updateLobbyUI;
 window.toggleUserStatus = toggleUserStatus;
 window.testLoadMessages = testLoadMessages;
 window.testAllUsers = testAllUsers;
+
 
