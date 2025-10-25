@@ -17,6 +17,59 @@ let privateChats = {};
 let currentUserStatus = 'online';
 let bottomRightMenuVisible = false;
 
+// Базовые функции UI
+function showLogin() {
+    document.getElementById('login-form').style.display = 'block';
+    document.getElementById('register-form').style.display = 'none';
+    document.getElementById('register-username').value = '';
+    document.getElementById('register-password').value = '';
+}
+
+function showRegister() {
+    document.getElementById('login-form').style.display = 'none';
+    document.getElementById('register-form').style.display = 'block';
+    document.getElementById('login-username').value = '';
+    document.getElementById('login-password').value = '';
+}
+
+function showAuth() {
+    document.getElementById('auth-container').style.display = 'flex';
+    document.getElementById('app-container').style.display = 'none';
+    currentUser = null;
+}
+
+function showApp() {
+    console.log('showApp: Function called.');
+    document.getElementById('auth-container').style.display = 'none';
+    document.getElementById('app-container').style.display = 'flex';
+    
+    hideSettings();
+    hideProfileModal();
+    hideImagePreview();
+    
+    if (currentUser) {
+        document.getElementById('current-username').textContent = currentUser.username;
+        document.getElementById('favorites-username').textContent = currentUser.username;
+        displayAvatarPreview(currentUser.avatar);
+    }
+    
+    switchChat('general');
+    
+    setTimeout(() => {
+        const messagesContainer = document.getElementById('messages');
+        const messageInput = document.getElementById('message-input');
+        
+        if (messagesContainer) {
+            messagesContainer.style.display = 'block';
+        }
+        if (messageInput) {
+            messageInput.style.display = 'block';
+        }
+        
+        loadMessages();
+    }, 100);
+}
+
 // Функция для генерации дефолтного аватара (SVG)
 function generateDefaultAvatar(username) {
     if (!username) return '';
@@ -38,8 +91,6 @@ function getAvatarColor(username) {
     const index = Math.abs(hash % colors.length);
     return colors[index];
 }
-// Конфигурация сервера - тот же домен
-const API_BASE = 'https://novamessenger.onrender.com/api';
 
 // Добавьте эту функцию для проверки ответа сервера
 async function handleApiResponse(response, endpoint) {
@@ -183,7 +234,7 @@ function updateLobbyUI() {
 
 // Инициализация при загрузке страницы
 function init() {
-	checkServerStatus();
+    checkServerStatus();
     checkAuth();
     loadTheme();
     setupEventListeners();
@@ -199,21 +250,34 @@ function init() {
 
 // Настройка обработчиков событий
 function setupEventListeners() {
-    document.getElementById('login-username').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') login();
-    });
+    const loginUsername = document.getElementById('login-username');
+    const loginPassword = document.getElementById('login-password');
+    const registerUsername = document.getElementById('register-username');
+    const registerPassword = document.getElementById('register-password');
     
-    document.getElementById('login-password').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') login();
-    });
+    if (loginUsername) {
+        loginUsername.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') login();
+        });
+    }
     
-    document.getElementById('register-username').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') register();
-    });
+    if (loginPassword) {
+        loginPassword.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') login();
+        });
+    }
     
-    document.getElementById('register-password').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') register();
-    });
+    if (registerUsername) {
+        registerUsername.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') register();
+        });
+    }
+    
+    if (registerPassword) {
+        registerPassword.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') register();
+        });
+    }
 
     document.addEventListener('click', function(event) {
         const modal = document.getElementById('settings-modal');
@@ -240,22 +304,31 @@ function setupEventListeners() {
         });
     }
 
-    document.getElementById('messages').addEventListener('contextmenu', function(event) {
-        const messageElement = event.target.closest('.message');
-        if (messageElement) {
-            event.preventDefault();
-            currentMessageElement = messageElement;
-            showContextMenu(event.clientX, event.clientY, messageElement);
-        }
-    });
+    const messagesContainer = document.getElementById('messages');
+    if (messagesContainer) {
+        messagesContainer.addEventListener('contextmenu', function(event) {
+            const messageElement = event.target.closest('.message');
+            if (messageElement) {
+                event.preventDefault();
+                currentMessageElement = messageElement;
+                showContextMenu(event.clientX, event.clientY, messageElement);
+            }
+        });
+    }
 
-    document.getElementById('clear-reply-button').addEventListener('click', clearReplyState);
+    const clearReplyButton = document.getElementById('clear-reply-button');
+    if (clearReplyButton) {
+        clearReplyButton.addEventListener('click', clearReplyState);
+    }
 
-    document.getElementById('reply-preview-container').addEventListener('click', function() {
-        if (replyToMessageId) {
-            scrollToMessageAndHighlight(replyToMessageId);
-        }
-    });
+    const replyPreviewContainer = document.getElementById('reply-preview-container');
+    if (replyPreviewContainer) {
+        replyPreviewContainer.addEventListener('click', function() {
+            if (replyToMessageId) {
+                scrollToMessageAndHighlight(replyToMessageId);
+            }
+        });
+    }
 
     document.addEventListener('click', function(event) {
         const contextMenu = document.getElementById('context-menu');
@@ -352,60 +425,7 @@ function checkAuth() {
     }
 }
 
-// Показать/скрыть формы
-function showAuth() {
-    document.getElementById('auth-container').style.display = 'flex';
-    document.getElementById('app-container').style.display = 'none';
-    currentUser = null;
-}
-
-function showApp() {
-    console.log('showApp: Function called.');
-    document.getElementById('auth-container').style.display = 'none';
-    document.getElementById('app-container').style.display = 'flex';
-    
-    hideSettings();
-    hideProfileModal();
-    hideImagePreview();
-    
-    if (currentUser) {
-        document.getElementById('current-username').textContent = currentUser.username;
-        document.getElementById('favorites-username').textContent = currentUser.username;
-        displayAvatarPreview(currentUser.avatar);
-    }
-    
-    switchChat('general');
-    
-    setTimeout(() => {
-        const messagesContainer = document.getElementById('messages');
-        const messageInput = document.getElementById('message-input');
-        
-        if (messagesContainer) {
-            messagesContainer.style.display = 'block';
-        }
-        if (messageInput) {
-            messageInput.style.display = 'block';
-        }
-        
-        loadMessages();
-    }, 100);
-}
-
-function showLogin() {
-    document.getElementById('login-form').style.display = 'block';
-    document.getElementById('register-form').style.display = 'none';
-    document.getElementById('register-username').value = '';
-    document.getElementById('register-password').value = '';
-}
-
-function showRegister() {
-    document.getElementById('login-form').style.display = 'none';
-    document.getElementById('register-form').style.display = 'block';
-    document.getElementById('login-username').value = '';
-    document.getElementById('login-password').value = '';
-}
-
-// Обновите функцию login
+// Функции аутентификации
 async function login() {
     const username = document.getElementById('login-username').value.trim();
     const password = document.getElementById('login-password').value;
@@ -464,7 +484,6 @@ async function login() {
     }
 }
 
-// Обновите функцию register
 async function register() {
     const username = document.getElementById('register-username').value.trim();
     const password = document.getElementById('register-password').value;
@@ -537,7 +556,7 @@ function logout() {
     updateLobbyUI();
 }
 
-// Отправка сообщения
+// Функции работы с сообщениями
 async function sendMessage() {
     const input = document.getElementById('message-input');
     const text = input.value.trim();
@@ -1198,14 +1217,7 @@ function getStatusText(status) {
     return statusTexts[status] || 'Неизвестно';
 }
 
-// Инициализация при загрузке
-window.onload = function() {
-    init();
-    setupKeyboardShortcuts();
-};
-
-// НОВЫЕ ИСПРАВЛЕННЫЕ ФУНКЦИИ:
-
+// Вспомогательные функции
 function hideProfileModal() {
     const modal = document.getElementById('profile-modal');
     if (modal) {
@@ -1651,8 +1663,6 @@ async function checkServerStatus() {
     }
 }
 
-
-
 // Функция для загрузки данных профиля при открытии настроек
 function loadProfileData() {
     if (!currentUser) return;
@@ -1746,19 +1756,6 @@ function addToFavorites() {
     });
 }
 
-// НОВАЯ ФУНКЦИЯ loadProfileData
-function loadProfileData() {
-    if (!currentUser) return;
-    
-    const aboutMeInput = document.getElementById('about-me-input');
-    if (aboutMeInput && currentUser.aboutMe) {
-        aboutMeInput.value = currentUser.aboutMe;
-    }
-    
-    displayAvatarPreview(currentUser.avatar);
-}
-
-// НОВАЯ ФУНКЦИЯ showContextMenu
 function showContextMenu(x, y, messageElement) {
     const contextMenu = document.getElementById('context-menu');
     if (!contextMenu) return;
@@ -1771,7 +1768,6 @@ function showContextMenu(x, y, messageElement) {
     currentMessageElement = messageElement;
 }
 
-// НОВАЯ ФУНКЦИЯ hideContextMenu
 function hideContextMenu() {
     const contextMenu = document.getElementById('context-menu');
     if (contextMenu) {
@@ -1780,7 +1776,6 @@ function hideContextMenu() {
     contextMenuVisible = false;
 }
 
-// НОВАЯ ФУНКЦИЯ updateMessageFavoriteStatusInDOM
 function updateMessageFavoriteStatusInDOM(messageId, isFavorite) {
     const messageElement = document.querySelector(`[data-message-id="${messageId}"]`);
     if (messageElement) {
@@ -1820,6 +1815,25 @@ async function testAllUsers() {
         console.error('Ошибка:', error);
     }
 }
+
+// Функция для показа/скрытия загрузки
+function showLoading(show, type) {
+    // Реализуйте эту функцию по необходимости
+}
+
+function toggleBottomRightMenu() {
+    // Реализуйте эту функцию по необходимости
+}
+
+function toggleFavorite(messageId) {
+    // Реализуйте эту функцию по необходимости
+}
+
+// Инициализация при загрузке
+window.onload = function() {
+    init();
+    setupKeyboardShortcuts();
+};
 
 // Глобальные функции для HTML
 window.searchUsers = searchUsers;
@@ -1866,4 +1880,3 @@ window.toggleUserStatus = toggleUserStatus;
 window.updateLobbyUI = updateLobbyUI;
 window.testLoadMessages = testLoadMessages;
 window.testAllUsers = testAllUsers;
-
