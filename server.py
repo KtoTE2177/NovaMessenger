@@ -8,7 +8,7 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='.')  # Добавьте static_folder='.'
 CORS(app)  # Разрешаем запросы с фронтенда
 
 # Временное хранилище (в продакшене используйте базу данных)
@@ -159,8 +159,22 @@ def api_logout():
         logger.info(f"User {username} logged out")
     
     return jsonify({'success': True})
+# Раздача статических файлов
+@app.route('/')
+def serve_index():
+    return send_from_directory('.', 'index.html')
+
+@app.route('/<path:filename>')
+def serve_static(filename):
+    # Разрешаем только безопасные файлы
+    allowed_extensions = ['.html', '.css', '.js', '.ico', '.png', '.jpg', '.json']
+    if any(filename.endswith(ext) for ext in allowed_extensions):
+        return send_from_directory('.', filename)
+    return "File not allowed", 404
+
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
     logger.info(f"Starting iNOVA Messenger API on port {port}")
     app.run(host='0.0.0.0', port=port, debug=False)
+
