@@ -166,15 +166,19 @@ def serve_index():
 
 @app.route('/<path:filename>')
 def serve_static(filename):
-    # Разрешаем только безопасные файлы
-    allowed_extensions = ['.html', '.css', '.js', '.ico', '.png', '.jpg', '.json']
-    if any(filename.endswith(ext) for ext in allowed_extensions):
-        return send_from_directory('.', filename)
-    return "File not allowed", 404
+    try:
+        # Разрешаем только безопасные файлы
+        allowed_extensions = ['.html', '.css', '.js', '.ico', '.png', '.jpg', '.json']
+        if any(filename.endswith(ext) for ext in allowed_extensions):
+            return send_from_directory('.', filename)
+        return "File not allowed", 404
+    except Exception as e:
+        return f"Error: {str(e)}", 500
 
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
     logger.info(f"Starting iNOVA Messenger API on port {port}")
     app.run(host='0.0.0.0', port=port, debug=False)
+
 
